@@ -1,17 +1,11 @@
+// src/app/api/auth/login/route.ts
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-
-// Importer la base de données depuis register
-import { users } from '../register/route';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
+import { apiClient } from '@/services/api-client';
 
 export async function POST(request: Request) {
   try {
     const { username, password } = await request.json();
 
-    // Validation
     if (!username || !password) {
       return NextResponse.json(
         { error: 'Nom d\'utilisateur et mot de passe requis' },
@@ -19,53 +13,20 @@ export async function POST(request: Request) {
       );
     }
 
-    // Trouver l'utilisateur
-    const user = users.find(u => u.username === username);
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Nom d\'utilisateur ou mot de passe incorrect' },
-        { status: 401 }
-      );
-    }
+    console.log('Tentative de connexion pour:', username);
 
-    // Vérifier le mot de passe
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    
-    if (!isValidPassword) {
-      return NextResponse.json(
-        { error: 'Nom d\'utilisateur ou mot de passe incorrect' },
-        { status: 401 }
-      );
-    }
+    // Utiliser l'API PHP sur O2switch
+    const result = await apiClient.login(username, password);
 
-    // Créer le token JWT
-    const token = jwt.sign(
-      { 
-        id: user.id, 
-        username: user.username,
-        role: user.role 
-      },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    console.log('Connexion réussie pour:', result.user.username);
 
-    // Retourner l'utilisateur sans le mot de passe
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        nom_utilisateur: user.username,
-        email: user.email,
-        role: user.role
-      },
-      token
-    });
+    return NextResponse.json(result);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur connexion:', error);
     return NextResponse.json(
-      { error: 'Erreur serveur lors de la connexion' },
-      { status: 500 }
+      { error: error.message || 'Erreur lors de la connexion' },
+      { status: 401 }
     );
   }
 }

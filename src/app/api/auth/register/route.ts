@@ -1,17 +1,12 @@
+// src/app/api/auth/register/route.ts
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-
-// Base de données temporaire (dans un vrai projet, utilisez MySQL/PostgreSQL)
-export const users: any[] = [];
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
+import { apiClient } from '@/services/api-client';
 
 export async function POST(request: Request) {
   try {
     const { username, email, password } = await request.json();
 
-    // Validation basique
+    // Validation
     if (!username || !password || !email) {
       return NextResponse.json(
         { error: 'Tous les champs sont requis' },
@@ -26,60 +21,29 @@ export async function POST(request: Request) {
       );
     }
 
-    // Vérifier si l'utilisateur existe déjà
-    const existingUser = users.find(
-      u => u.username === username || u.email === email
-    );
-    
-    if (existingUser) {
+    // Validation email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: 'Cet utilisateur ou email existe déjà' },
+        { error: 'Email invalide' },
         { status: 400 }
       );
     }
 
-    // Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log('Tentative d\'inscription:', { username, email });
 
-    // Créer le nouvel utilisateur
-    const newUser = {
-      id: users.length + 1,
-      username,
-      email,
-      password: hashedPassword,
-      role: 'user',
-      created_at: new Date()
-    };
+    // Utiliser l'API PHP sur O2switch
+    const result = await apiClient.register(username, email, password);
 
-    users.push(newUser);
+    console.log('Inscription réussie pour:', result.user.username);
 
-    // Créer le token JWT
-    const token = jwt.sign(
-      { 
-        id: newUser.id, 
-        username: newUser.username,
-        role: newUser.role 
-      },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    return NextResponse.json(result);
 
-    // Retourner l'utilisateur sans le mot de passe
-    return NextResponse.json({
-      user: {
-        id: newUser.id,
-        nom_utilisateur: newUser.username,
-        email: newUser.email,
-        role: newUser.role
-      },
-      token
-    });
-
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur inscription:', error);
     return NextResponse.json(
-      { error: 'Erreur serveur lors de l\'inscription' },
-      { status: 500 }
+      { error: error.message || 'Erreur lors de l\'inscription' },
+      { status: 400 }
     );
   }
 }
