@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 import Link from 'next/link';
 
 export function LoginForm() {
@@ -21,8 +21,10 @@ export function LoginForm() {
 
     try {
       await login(formData.username, formData.password);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      console.error('Erreur connexion:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -32,7 +34,7 @@ export function LoginForm() {
     <div className="w-full max-w-md mx-auto mt-20">
       <div className="bg-white p-8 rounded-lg shadow-lg">
         <h2 className="text-2xl font-bold mb-6 text-center">Connexion</h2>
-
+        
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-600 rounded">
             {error}
@@ -68,7 +70,7 @@ export function LoginForm() {
         </form>
 
         <p className="mt-4 text-center">
-          Pas de compte ? <Link href="/auth/register" className="text-blue-500">S'inscrire</Link>
+          Pas de compte ? <Link href="/auth/register" className="text-blue-500">S&apos;inscrire</Link>
         </p>
       </div>
     </div>

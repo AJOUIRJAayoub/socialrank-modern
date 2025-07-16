@@ -42,24 +42,26 @@ export async function testConnection() {
 }
 
 // Fonction query améliorée avec gestion d'erreurs
-export async function query<T = any>(sql: string, params?: any[]): Promise<T[]> {
+export async function query<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
   try {
     const [results] = await getPool().execute(sql, params);
     return results as T[];
-  } catch (error: any) {
+  } catch (error) {
     console.error('Database query error:', error);
     
     // Si c'est une erreur de connexion, on donne plus d'infos
-    if (error.code === 'ECONNREFUSED') {
-      throw new Error('Impossible de se connecter à la base de données. Vérifiez vos paramètres de connexion.');
-    }
-    
-    if (error.code === 'ER_ACCESS_DENIED_ERROR') {
-      throw new Error('Accès refusé. Vérifiez votre nom d\'utilisateur et mot de passe.');
-    }
-    
-    if (error.code === 'ER_BAD_DB_ERROR') {
-      throw new Error('Base de données introuvable. Vérifiez le nom de la base.');
+    if (error instanceof Error) {
+      const mysqlError = error as any; // Type assertion temporaire pour accéder au code
+      
+      if (mysqlError.code === 'ECONNREFUSED') {
+        throw new Error('Impossible de se connecter à la base de données. Vérifiez vos paramètres de connexion.');
+      }
+      if (mysqlError.code === 'ER_ACCESS_DENIED_ERROR') {
+        throw new Error('Accès refusé. Vérifiez votre nom d\'utilisateur et mot de passe.');
+      }
+      if (mysqlError.code === 'ER_BAD_DB_ERROR') {
+        throw new Error('Base de données introuvable. Vérifiez le nom de la base.');
+      }
     }
     
     throw error;

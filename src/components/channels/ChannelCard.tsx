@@ -1,7 +1,7 @@
 'use client';
 
 import { Channel } from '@/types';
-import { Users, Eye, Video, TrendingUp, TrendingDown } from 'lucide-react';
+import { Users, Eye, Video } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ChannelCardProps {
@@ -63,7 +63,7 @@ export function ChannelCard({ channel, rank }: ChannelCardProps) {
         {channel.image && (
           <img
             src={channel.image}
-            alt={channel.nom}
+            alt={`Avatar de ${channel.nom}`}
             className="w-16 h-16 rounded-full object-cover"
           />
         )}

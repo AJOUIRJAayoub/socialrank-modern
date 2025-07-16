@@ -25,10 +25,13 @@ export function RegisterForm() {
     }
 
     setIsLoading(true);
+
     try {
       await register(formData.username, formData.email, formData.password);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      console.error('Erreur inscription:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de l\'inscription';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -38,7 +41,7 @@ export function RegisterForm() {
     <div className="w-full max-w-md mx-auto mt-20">
       <div className="bg-white p-8 rounded-lg shadow-lg">
         <h2 className="text-2xl font-bold mb-6 text-center">Inscription</h2>
-
+        
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-600 rounded">
             {error}
