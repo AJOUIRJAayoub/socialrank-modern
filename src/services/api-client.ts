@@ -1,4 +1,5 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://yr.wacs.fr/auth-api.php';
+// Ligne 1 - Changer l'URL par défaut
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://yr.wacs.fr/auth-complete.php';
 
 export const apiClient = {
   async testConnection() {
