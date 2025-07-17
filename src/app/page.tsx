@@ -45,7 +45,7 @@ export default function HomePage() {
                 <>
                   <div className="flex items-center gap-2 text-gray-700">
                     <User className="w-5 h-5" />
-                    <span className="font-medium">{user.nom_utilisateur}</span>
+                    <span className="font-medium">{user.username}</span>
                   </div>
                   <button
                     onClick={logout}

@@ -28,6 +28,7 @@ export function RegisterForm() {
 
     try {
       await register(formData.username, formData.email, formData.password);
+      // La redirection est gérée dans le contexte
     } catch (err) {
       console.error('Erreur inscription:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors de l\'inscription';
@@ -69,10 +70,11 @@ export function RegisterForm() {
 
           <input
             type="password"
-            placeholder="Mot de passe"
+            placeholder="Mot de passe (min. 6 caractères)"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             className="w-full p-3 border rounded"
+            minLength={6}
             required
           />
 

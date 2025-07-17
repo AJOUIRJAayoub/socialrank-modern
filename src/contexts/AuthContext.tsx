@@ -6,7 +6,7 @@ import Cookies from 'js-cookie';
 
 interface User {
   id: number;
-  nom_utilisateur: string;
+  username: string;  // Changé de nom_utilisateur à username
   email?: string;
   role: 'user' | 'admin';
 }
@@ -29,15 +29,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = Cookies.get('token');
     if (token) {
-      fetch('/api/auth/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.user) setUser(data.user);
-        })
-        .catch(() => Cookies.remove('token'))
-        .finally(() => setIsLoading(false));
+      // Pour l'instant, on décode juste le user du localStorage
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
+      setIsLoading(false);
     } else {
       setIsLoading(false);
     }
@@ -51,10 +48,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const data = await response.json();
+    
     if (!response.ok) throw new Error(data.error || 'Erreur de connexion');
-
+    
+    // L'API retourne username, pas nom_utilisateur
+    const userData = {
+      id: data.user.id,
+      username: data.user.username || data.user.nom_utilisateur,
+      email: data.user.email,
+      role: data.user.role
+    };
+    
     Cookies.set('token', data.token, { expires: 7 });
-    setUser(data.user);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
     router.push('/');
   };
 
@@ -66,15 +73,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const data = await response.json();
+    
     if (!response.ok) throw new Error(data.error || 'Erreur lors de l\'inscription');
-
+    
+    // L'API retourne username, pas nom_utilisateur
+    const userData = {
+      id: data.user.id,
+      username: data.user.username || data.user.nom_utilisateur,
+      email: data.user.email,
+      role: data.user.role
+    };
+    
     Cookies.set('token', data.token, { expires: 7 });
-    setUser(data.user);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
     router.push('/');
   };
 
   const logout = () => {
     Cookies.remove('token');
+    localStorage.removeItem('user');
     setUser(null);
     router.push('/');
   };
