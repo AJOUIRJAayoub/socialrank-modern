@@ -1,10 +1,11 @@
-// src/app/api/auth/register/route.ts
 import { NextResponse } from 'next/server';
 import { apiClient } from '@/services/api-client';
 
 export async function POST(request: Request) {
   try {
     const { username, email, password } = await request.json();
+    
+    console.log('Register request:', { username, email, password: '***' });
     
     // Validation
     if (!username || !password || !email) {
@@ -30,12 +31,19 @@ export async function POST(request: Request) {
       );
     }
     
-    console.log('Tentative d\'inscription:', { username, email });
-    
     // Utiliser l'API PHP sur O2switch
     const result = await apiClient.register(username, email, password);
     
-    console.log('Inscription réussie pour:', result.user.username);
+    console.log('API Response:', result);
+    
+    // Vérifier la structure de la réponse
+    if (!result || !result.user || !result.token) {
+      console.error('Invalid API response:', result);
+      return NextResponse.json(
+        { error: 'Réponse invalide de l\'API' },
+        { status: 500 }
+      );
+    }
     
     return NextResponse.json(result);
     
