@@ -1,23 +1,41 @@
-// src/app/api/test-db/route.ts
 import { NextResponse } from 'next/server';
-import { apiClient } from '@/services/api-client';
 
 export async function GET() {
-  try {
-    const result = await apiClient.testConnection();
-    
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  
+  if (!apiUrl) {
     return NextResponse.json({
-      success: true,
-      message: '✅ Connexion à l\'API O2switch OK!',
-      ...result
+      error: 'NEXT_PUBLIC_API_URL non définie',
+      env: process.env
     });
-  } catch (error: any) {
-    console.error('Erreur test API:', error);
+  }
+  
+  try {
+    const testUrl = `${apiUrl}?action=test`;
+    const response = await fetch(testUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
+    
+    const text = await response.text();
+    
+    // Retourner le texte brut pour voir l'erreur
     return NextResponse.json({
       success: false,
-      message: '❌ Erreur de connexion à l\'API',
-      error: error.message,
-      hint: 'Vérifiez que NEXT_PUBLIC_API_URL est bien défini dans .env.local'
-    }, { status: 500 });
+      url: testUrl,
+      status: response.status,
+      headers: Object.fromEntries(response.headers.entries()),
+      body: text.substring(0, 1000), // Premiers 1000 caractères
+      isHtml: text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')
+    });
+    
+  } catch (error: any) {
+    return NextResponse.json({
+      error: 'Erreur fetch',
+      message: error.message,
+      apiUrl
+    });
   }
 }
