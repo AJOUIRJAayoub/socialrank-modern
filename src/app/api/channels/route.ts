@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server';
+import { apiClient } from '@/services/api-client';
 
-// Données de test en attendant l'accès à l'API
-const FAKE_CHANNELS = [
-  { id: 1, nom: "Squeezie", abonnes: 18500000 },
-  { id: 2, nom: "Cyprien", abonnes: 14200000 },
-  { id: 3, nom: "Norman", abonnes: 12100000 },
-  { id: 4, nom: "Tibo InShape", abonnes: 9800000 },
-  { id: 5, nom: "Amixem", abonnes: 8200000 },
-];
-
-export async function GET() {
-  return NextResponse.json(FAKE_CHANNELS);
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get('search') || undefined;
+    
+    // Récupérer les vraies données depuis l'API PHP
+    const channels = await apiClient.getChannels(search);
+    
+    return NextResponse.json(channels);
+    
+  } catch (error) {
+    console.error('Erreur channels:', error);
+    return NextResponse.json(
+      { error: 'Erreur lors de la récupération des chaînes' },
+      { status: 500 }
+    );
+  }
 }

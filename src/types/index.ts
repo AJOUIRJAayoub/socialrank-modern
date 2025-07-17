@@ -11,11 +11,13 @@ export interface Channel {
   langue_principale?: string;
   date_ajout: string;
   derniere_maj: string;
+  theme_principal?: string;
+  total_votes?: number;
 }
 
 export interface User {
   id: number;
-  nom_utilisateur: string;
+  username: string;
   email?: string;
   role: 'admin' | 'user';
 }

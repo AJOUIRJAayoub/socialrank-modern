@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import { useChannels } from '@/hooks/useChannels';
 import { ChannelCard } from '@/components/channels/ChannelCard';
+import { SubmitChannelForm } from '@/components/channels/SubmitChannelForm';
 import { Search, Loader2, TrendingUp, LogIn, UserPlus, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
 export default function HomePage() {
   const [search, setSearch] = useState('');
-  const { data: channels, isLoading, error } = useChannels(search);
+  const { data: channels, isLoading, error, refetch } = useChannels(search);
   const { user, logout } = useAuth();
 
   return (
@@ -93,29 +94,121 @@ export default function HomePage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {isLoading && (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-          </div>
-        )}
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Liste des chaînes - Colonne principale */}
+          <div className="lg:col-span-2">
+            {isLoading && (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+              </div>
+            )}
 
-        {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-lg">
-            Erreur lors du chargement des chaînes
-          </div>
-        )}
+            {error && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+                Erreur lors du chargement des chaînes
+              </div>
+            )}
 
-        {channels && (
-          <div className="grid gap-4">
-            {channels.map((channel, index) => (
-              <ChannelCard
-                key={channel.id}
-                channel={channel}
-                rank={index + 1}
-              />
-            ))}
+            {channels && channels.length === 0 && (
+              <div className="bg-gray-100 text-gray-600 p-8 rounded-lg text-center">
+                <p className="text-lg">Aucune chaîne trouvée</p>
+                {search && (
+                  <p className="mt-2">Essayez avec d'autres mots-clés</p>
+                )}
+              </div>
+            )}
+
+            {channels && channels.length > 0 && (
+              <div className="grid gap-4">
+                {channels.map((channel: any, index: number) => (
+                  <ChannelCard
+                    key={channel.id}
+                    channel={channel}
+                    rank={index + 1}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Sidebar - Colonne droite */}
+          <div className="space-y-6">
+            {/* Formulaire de soumission - Visible seulement si connecté */}
+            {user && <SubmitChannelForm />}
+            
+            {/* Widget de statistiques */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-500" />
+                Statistiques
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Chaînes référencées</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {channels ? channels.length : 0}
+                  </p>
+                </div>
+                {channels && channels.length > 0 && (
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Total d'abonnés</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {channels.reduce((sum: number, ch: any) => sum + (ch.abonnes || 0), 0).toLocaleString('fr-FR')}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Call to action si non connecté */}
+            {!user && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-2 text-blue-900 dark:text-blue-100">
+                  Rejoignez la communauté !
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-200 mb-4">
+                  Connectez-vous pour proposer des chaînes et voter pour leurs thèmes.
+                </p>
+                <Link
+                  href="/auth/register"
+                  className="block w-full text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  S'inscrire gratuitement
+                </Link>
+              </div>
+            )}
+
+            {/* Top des thèmes */}
+            {channels && channels.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">Top des thèmes</h3>
+                <div className="space-y-2">
+                  {/* Calculer les thèmes les plus populaires */}
+                  {(() => {
+                    const themeCounts: Record<string, number> = {};
+                    channels.forEach((ch: any) => {
+                      if (ch.theme_principal) {
+                        themeCounts[ch.theme_principal] = (themeCounts[ch.theme_principal] || 0) + 1;
+                      }
+                    });
+                    
+                    return Object.entries(themeCounts)
+                      .sort(([, a], [, b]) => b - a)
+                      .slice(0, 5)
+                      .map(([theme, count]) => (
+                        <div key={theme} className="flex justify-between items-center">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{theme}</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            {count} chaîne{count > 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      ));
+                  })()}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </main>
     </div>
   );
