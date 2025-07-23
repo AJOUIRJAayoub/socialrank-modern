@@ -145,7 +145,7 @@ export const apiClient = {
   async getChannelVotes(channelId: number) {
     const token = getToken();
     
-    // Pour GET, on peut passer le token en query param
+    // Pour GET, on peut passer token en query param
     const url = token 
       ? `${API_URL}?action=channel_votes&channelId=${channelId}&token=${encodeURIComponent(token)}`
       : `${API_URL}?action=channel_votes&channelId=${channelId}`;
