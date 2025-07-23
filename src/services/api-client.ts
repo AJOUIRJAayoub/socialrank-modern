@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://abc123go.ranki5.com/auth-api.php';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://abc123go.ranki5.com/api.php';
 
 // Fonction pour récupérer le token
 function getAuthHeader(): Record<string, string> {
@@ -155,5 +155,23 @@ export const apiClient = {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
     return data;
-  }
+  },
+
+  async getYouTubeChannels(search?: string, category?: string) {
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  if (category) params.append('category', category);
+  
+  const response = await fetch(`${API_URL.replace('api.php', 'youtube-api.php')}?action=get_channels&${params}`);
+  
+  if (!response.ok) throw new Error('Erreur lors du chargement');
+  return response.json();
+  },
+
+  async updateChannelData(channelId: string) {
+  const response = await fetch(`${API_URL.replace('api.php', 'youtube-api.php')}?action=update_channel&channel_id=${channelId}`);
+  
+  if (!response.ok) throw new Error('Erreur lors de la mise à jour');
+  return response.json();
+  },
 };

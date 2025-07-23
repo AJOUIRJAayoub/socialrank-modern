@@ -1,41 +1,41 @@
 import { NextResponse } from 'next/server';
+import { query } from '@/lib/db';
+
+interface CountResult {
+  total: number;
+}
 
 export async function GET() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  
-  if (!apiUrl) {
-    return NextResponse.json({
-      error: 'NEXT_PUBLIC_API_URL non définie',
-      env: process.env
-    });
-  }
-  
   try {
-    const testUrl = `${apiUrl}?action=test`;
-    const response = await fetch(testUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
+    // Test de connexion
+    const tables = await query('SHOW TABLES');
+    
+    // Vérifier la structure de la table chaines
+    const columns = await query('SHOW COLUMNS FROM chaines');
+    
+    // Compter les enregistrements
+    const countResult = await query<CountResult>('SELECT COUNT(*) as total FROM chaines');
+    
+    // Essayer de récupérer quelques enregistrements
+    const sampleData = await query('SELECT id, nom, abonnes FROM chaines LIMIT 3');
+    
+    return NextResponse.json({
+      success: true,
+      tables: tables,
+      columns: columns,
+      count: countResult[0]?.total || 0,
+      sampleData: sampleData,
+      dbInfo: {
+        host: process.env.DB_HOST,
+        database: process.env.DB_NAME,
+        user: process.env.DB_USER
       }
     });
-    
-    const text = await response.text();
-    
-    // Retourner le texte brut pour voir l'erreur
+  } catch (error) {
     return NextResponse.json({
       success: false,
-      url: testUrl,
-      status: response.status,
-      headers: Object.fromEntries(response.headers.entries()),
-      body: text.substring(0, 1000), // Premiers 1000 caractères
-      isHtml: text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')
-    });
-    
-  } catch (error: any) {
-    return NextResponse.json({
-      error: 'Erreur fetch',
-      message: error.message,
-      apiUrl
+      error: (error as Error).message,
+      stack: (error as Error).stack
     });
   }
 }

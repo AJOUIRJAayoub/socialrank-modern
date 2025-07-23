@@ -7,12 +7,11 @@ export interface Channel {
   vues?: number;
   videos?: number;
   image?: string;
-  categorie?: string;
   langue_principale?: string;
-  date_ajout: string;
-  derniere_maj: string;
   theme_principal?: string;
-  total_votes?: number;
+  pays?: string;
+  date_ajout?: string;
+  derniere_maj?: string;
 }
 
 export interface User {
