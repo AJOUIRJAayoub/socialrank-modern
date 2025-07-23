@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://yr.wacs.fr/auth-api.php';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://abc123go.ranki5.com/auth-api.php';
 
 // Fonction pour récupérer le token
 function getAuthHeader(): Record<string, string> {
