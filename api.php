@@ -1,5 +1,5 @@
 <?php
-// api.php - API pour SocialRank
+// api.php - API pour RankI5
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
