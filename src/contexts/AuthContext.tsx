@@ -3,10 +3,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
+import { apiClient } from '@/services/api-client';
 
 interface User {
   id: number;
-  username: string;  // Changé de nom_utilisateur à username
+  username: string;
   email?: string;
   role: 'user' | 'admin';
 }
@@ -29,65 +30,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = Cookies.get('token');
     if (token) {
-      // Pour l'instant, on décode juste le user du localStorage
       const savedUser = localStorage.getItem('user');
       if (savedUser) {
         setUser(JSON.parse(savedUser));
       }
-      setIsLoading(false);
-    } else {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   }, []);
 
   const login = async (username: string, password: string) => {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-
-    const data = await response.json();
-    
-    if (!response.ok) throw new Error(data.error || 'Erreur de connexion');
-    
-    // L'API retourne username, pas nom_utilisateur
-    const userData = {
-      id: data.user.id,
-      username: data.user.username || data.user.nom_utilisateur,
-      email: data.user.email,
-      role: data.user.role
-    };
-    
-    Cookies.set('token', data.token, { expires: 7 });
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-    router.push('/');
+    try {
+      // Utiliser apiClient au lieu de fetch direct
+      const data = await apiClient.login(username, password);
+      
+      // L'API retourne directement les données, pas dans data.user
+      const userData = {
+        id: data.id || 1,
+        username: data.username || username,
+        email: data.email || '',
+        role: data.role || 'user'
+      };
+      
+      if (data.token) {
+        Cookies.set('token', data.token, { expires: 7 });
+      }
+      
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      router.push('/');
+    } catch (error: any) {
+      throw new Error(error.message || 'Erreur de connexion');
+    }
   };
 
   const register = async (username: string, email: string, password: string) => {
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password }),
-    });
-
-    const data = await response.json();
-    
-    if (!response.ok) throw new Error(data.error || 'Erreur lors de l\'inscription');
-    
-    // L'API retourne username, pas nom_utilisateur
-    const userData = {
-      id: data.user.id,
-      username: data.user.username || data.user.nom_utilisateur,
-      email: data.user.email,
-      role: data.user.role
-    };
-    
-    Cookies.set('token', data.token, { expires: 7 });
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-    router.push('/');
+    try {
+      // Utiliser apiClient
+      const data = await apiClient.register(username, email, password);
+      
+      // L'API retourne directement les données
+      const userData = {
+        id: data.id || Math.floor(Math.random() * 1000),
+        username: data.username || username,
+        email: data.email || email,
+        role: data.role || 'user'
+      };
+      
+      if (data.token) {
+        Cookies.set('token', data.token, { expires: 7 });
+      }
+      
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      router.push('/');
+    } catch (error: any) {
+      throw new Error(error.message || 'Erreur lors de l\'inscription');
+    }
   };
 
   const logout = () => {

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { apiClient } from '@/services/api-client';
 
 export async function POST(request: Request) {
   console.log('=== Submit Channel API Called ===');
@@ -24,41 +23,48 @@ export async function POST(request: Request) {
     }
     
     // Validation des données
-    if (!youtubeId || !url) {
-      console.log('Missing required data:', { youtubeId: !!youtubeId, url: !!url });
+    if (!youtubeId || !nom) {
+      console.log('Missing required data:', { youtubeId: !!youtubeId, nom: !!nom });
       return NextResponse.json(
-        { error: 'ID YouTube et URL requis' },
+        { error: 'ID YouTube et nom requis' },
         { status: 400 }
       );
     }
     
-    // Nom par défaut si non fourni
-    const channelName = nom || youtubeId;
+    console.log('Calling PHP API with:', { youtubeId, url, nom, token: token.value });
     
-    console.log('Calling PHP API with:', { youtubeId, url, nom: channelName });
+    // Appeler directement l'API PHP depuis le serveur (pas de CORS ici)
+    const response = await fetch('https://abc123go.ranki5.com/api.php?action=submit_channel', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        youtubeId,
+        url: url || `https://youtube.com/channel/${youtubeId}`,
+        nom,
+        token: token.value
+      })
+    });
     
-    // Appeler l'API PHP pour sauvegarder dans la BDD
-    const result = await apiClient.submitChannel(youtubeId, url, channelName);
-    
+    const result = await response.json();
     console.log('PHP API response:', result);
+    
+    if (!response.ok || result.error) {
+      return NextResponse.json(
+        { error: result.error || 'Erreur lors de la soumission' },
+        { status: response.status || 400 }
+      );
+    }
     
     return NextResponse.json(result);
     
   } catch (error: any) {
     console.error('=== Submit Error ===');
     console.error('Error:', error);
-    console.error('Error message:', error.message);
-    
-    // Si c'est une erreur de l'API
-    if (error.message) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
     
     return NextResponse.json(
-      { error: 'Erreur lors de la soumission' },
+      { error: 'Erreur serveur lors de la soumission' },
       { status: 500 }
     );
   }

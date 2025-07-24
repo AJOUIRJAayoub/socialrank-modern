@@ -2,20 +2,31 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 
 // Fonction pour extraire l'ID YouTube d'une URL
 function extractYoutubeId(url: string): string | null {
+  // Nettoyer l'URL
+  url = url.trim();
+  
+  // Patterns pour différents formats YouTube
   const patterns = [
     /youtube\.com\/channel\/([^\/\?]+)/,
     /youtube\.com\/c\/([^\/\?]+)/,
     /youtube\.com\/@([^\/\?]+)/,
-    /youtube\.com\/user\/([^\/\?]+)/
+    /youtube\.com\/user\/([^\/\?]+)/,
+    /youtu\.be\/([^\/\?]+)/,
+    /youtube\.com\/watch\?v=([^&]+)/
   ];
   
   for (const pattern of patterns) {
     const match = url.match(pattern);
     if (match) return match[1];
+  }
+  
+  // Si c'est juste un ID ou @username direct
+  if (url.match(/^@?[A-Za-z0-9_-]+$/)) {
+    return url.replace('@', '');
   }
   
   return null;
@@ -59,33 +70,67 @@ export function SubmitChannelForm() {
     try {
       // Extraire l'ID YouTube de l'URL
       const youtubeId = extractYoutubeId(url);
+      console.log('YouTube ID extrait:', youtubeId);
       
       if (!youtubeId) {
-        setMessage({ type: 'error', text: 'URL YouTube invalide' });
+        setMessage({ type: 'error', text: 'URL YouTube invalide. Formats acceptés: youtube.com/@channel, youtube.com/channel/ID' });
         setIsLoading(false);
         return;
       }
       
       // Extraire le nom de la chaîne
       const nom = extractChannelName(url);
+      console.log('Nom extrait:', nom);
       
-      const response = await fetch('/api/channels/submit', {
+      // Récupérer le token depuis les cookies
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('token='))
+        ?.split('=')[1];
+      console.log('Token trouvé:', !!token);
+      
+      const payload = { 
+        youtubeId, 
+        url, 
+        nom,
+        token
+      };
+      console.log('Payload envoyé:', payload);
+      
+      // Appeler directement l'API PHP (temporaire pour tester)
+      const response = await fetch('https://abc123go.ranki5.com/api.php?action=submit_channel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ youtubeId, url, nom })
+        body: JSON.stringify(payload)
       });
       
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Response data:', data);
       
-      if (response.ok) {
-        setMessage({ type: 'success', text: 'Chaîne proposée avec succès ! Elle sera vérifiée prochainement.' });
-        setUrl('');
-      } else {
-        setMessage({ type: 'error', text: data.error || 'Erreur lors de la soumission' });
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Erreur lors de la soumission');
       }
-    } catch (error) {
+      
+      setMessage({ 
+        type: 'success', 
+        text: data.message || 'Chaîne proposée avec succès ! Elle apparaîtra après vérification.' 
+      });
+      setUrl('');
+      
+      // Recharger la page après 2 secondes si on est sur /youtube
+      if (window.location.pathname === '/youtube') {
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      }
+      
+    } catch (error: any) {
       console.error('Erreur submit:', error);
-      setMessage({ type: 'error', text: 'Erreur lors de la soumission' });
+      setMessage({ 
+        type: 'error', 
+        text: error.message || 'Erreur lors de la soumission' 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -94,44 +139,67 @@ export function SubmitChannelForm() {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
       <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <Plus className="w-5 h-5" />
+        <Plus className="w-5 h-5 text-blue-500" />
         Proposer une chaîne
       </h3>
       
       {message && (
-        <div className={`mb-4 p-3 rounded ${
-          message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+        <div className={`mb-4 p-3 rounded-lg text-sm ${
+          message.type === 'success' 
+            ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300' 
+            : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300'
         }`}>
           {message.text}
         </div>
       )}
       
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="url"
-          placeholder="https://youtube.com/@NomDeLaChaine"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
-          pattern="https?://(www\.)?youtube\.com/(channel/|c/|@|user/).*"
-          required
-          disabled={isLoading}
-        />
+        <div>
+          <input
+            type="text"
+            placeholder="https://youtube.com/@NomDeLaChaine"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            required
+            disabled={isLoading}
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Formats acceptés: youtube.com/@channel, youtube.com/channel/ID, youtube.com/c/channel
+          </p>
+        </div>
         
         <button
           type="submit"
           disabled={isLoading || !user}
-          className="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
-          {isLoading ? 'Envoi...' : 'Proposer cette chaîne'}
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Envoi en cours...
+            </>
+          ) : (
+            <>
+              <Plus className="w-4 h-4" />
+              Proposer cette chaîne
+            </>
+          )}
         </button>
         
         {!user && (
-          <p className="text-sm text-gray-500 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
             Connectez-vous pour proposer des chaînes
           </p>
         )}
       </form>
+      
+      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+        <p className="text-xs text-gray-600 dark:text-gray-400">
+          💡 Les chaînes proposées apparaissent dans cette page après validation.
+          Le Top 100 mondial est réservé aux plus grandes chaînes.
+        </p>
+      </div>
     </div>
   );
 }

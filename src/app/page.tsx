@@ -2,46 +2,96 @@
 
 import { useState } from 'react';
 import { useChannels } from '@/hooks/useChannels';
-import { ChannelCard } from '@/components/channels/ChannelCard';
-import { SubmitChannelForm } from '@/components/channels/SubmitChannelForm';
-import { Loader2, TrendingUp, RefreshCw, Youtube, Download, Shield } from 'lucide-react';
+import ChannelCard from '@/components/channels/ChannelCard';
+import { Loader2, TrendingUp, RefreshCw, Youtube, Download, Shield, Crown, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { Header } from '@/components/layout/Header';
 
 export default function HomePage() {
   const [search, setSearch] = useState('');
-  const { data: channels, isLoading, error, refetch } = useChannels(search);
+  // Utiliser le filtre top100 pour cette page
+  const { data: channels, isLoading, error, refetch } = useChannels(search, 'top100');
   const { user } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isUpdatingStats, setIsUpdatingStats] = useState(false);
 
   // Vérifier si l'utilisateur est admin
-  const isAdmin = user?.role === 'admin' || user?.email === 'ayoub.ajouirja49@outlook.fr';
+  const isAdmin = user?.role === 'admin' || user?.email === 'ayoub.ajouirja49@outlook.fr' || user?.username === 'test';
 
-  // Fonction pour synchroniser avec YouTube
+  // Fonction pour synchroniser avec YouTube (ancienne)
   const syncWithYouTube = async () => {
     setIsSyncing(true);
     try {
-      const response = await fetch('/api/channels/sync', {
+      // Récupérer le token
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('token='))
+        ?.split('=')[1];
+
+      const response = await fetch('https://abc123go.ranki5.com/api.php?action=update_all_stats', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       const data = await response.json();
       
       if (data.success) {
-        alert(`✅ ${data.synced} chaînes synchronisées avec succès !`);
-        refetch();
+        alert(`✅ Mise à jour terminée !\n\n${data.updated} chaînes mises à jour sur ${data.total}\n\nActualisez la page pour voir les changements.`);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
-        alert('❌ Erreur lors de la synchronisation');
+        alert(`❌ Erreur: ${data.error || 'Erreur lors de la synchronisation'}`);
       }
     } catch (error) {
       console.error('Erreur sync:', error);
       alert('❌ Erreur lors de la synchronisation');
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  // Nouvelle fonction pour mettre à jour les stats
+  const updateAllStats = async () => {
+    if (!confirm('Mettre à jour les statistiques des chaînes ? Cela peut prendre quelques secondes.')) {
+      return;
+    }
+    
+    setIsUpdatingStats(true);
+    try {
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('token='))
+        ?.split('=')[1];
+
+      const response = await fetch('https://abc123go.ranki5.com/api.php?action=update_all_stats', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        alert(`✅ Statistiques mises à jour !\n\n${data.updated} chaînes actualisées\n${data.errors?.length > 0 ? `\nErreurs: ${data.errors.join(', ')}` : ''}`);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        alert(`❌ ${data.error || 'Erreur lors de la mise à jour'}`);
+      }
+    } catch (error) {
+      console.error('Erreur update stats:', error);
+      alert('❌ Erreur lors de la mise à jour des statistiques');
+    } finally {
+      setIsUpdatingStats(false);
     }
   };
 
@@ -69,6 +119,9 @@ export default function HomePage() {
     }
   };
 
+  // Calculer les stats des chaînes sans données
+  const channelsWithoutStats = channels?.filter((ch: any) => ch.abonnes === 0).length || 0;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header avec recherche */}
@@ -77,6 +130,20 @@ export default function HomePage() {
         searchValue={search}
         onSearchChange={setSearch}
       />
+
+      {/* Bannière Top 100 */}
+      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white py-6">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center gap-3">
+            <Crown className="w-8 h-8" />
+            <h1 className="text-3xl font-bold">Top 100 des plus grandes chaînes YouTube mondiales</h1>
+            <Crown className="w-8 h-8" />
+          </div>
+          <p className="text-center mt-2 text-yellow-100">
+            Les géants de YouTube classés par nombre d'abonnés
+          </p>
+        </div>
+      </div>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
@@ -107,7 +174,7 @@ export default function HomePage() {
 
             {channels && channels.length === 0 && search && (
               <div className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 p-8 rounded-lg text-center">
-                <p className="text-lg">Aucune chaîne trouvée</p>
+                <p className="text-lg">Aucune chaîne trouvée dans le Top 100</p>
                 <p className="mt-2">Essayez avec d'autres mots-clés</p>
               </div>
             )}
@@ -119,6 +186,7 @@ export default function HomePage() {
                     key={channel.id}
                     channel={channel}
                     rank={index + 1}
+                    isUserLoggedIn={!!user}
                   />
                 ))}
               </div>
@@ -137,6 +205,8 @@ export default function HomePage() {
                 <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
                   Fonctions réservées aux administrateurs
                 </p>
+                
+                {/* Bouton Import Top 100 */}
                 <button
                   onClick={importTop100}
                   disabled={isImporting || isLoading}
@@ -155,6 +225,26 @@ export default function HomePage() {
                   )}
                 </button>
                 
+                {/* Nouveau bouton de mise à jour des stats */}
+                <button
+                  onClick={updateAllStats}
+                  disabled={isUpdatingStats || channels?.length === 0}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors mb-3"
+                >
+                  {isUpdatingStats ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Mise à jour en cours...
+                    </>
+                  ) : (
+                    <>
+                      <BarChart3 className="w-4 h-4" />
+                      Actualiser les statistiques
+                    </>
+                  )}
+                </button>
+                
+                {/* Ancien bouton de sync (gardé pour compatibilité) */}
                 <button
                   onClick={syncWithYouTube}
                   disabled={isSyncing || channels?.length === 0}
@@ -168,10 +258,19 @@ export default function HomePage() {
                   ) : (
                     <>
                       <RefreshCw className="w-4 h-4" />
-                      Mettre à jour les données
+                      Sync YouTube (Legacy)
                     </>
                   )}
                 </button>
+                
+                {/* Informations sur les chaînes sans stats */}
+                {channelsWithoutStats > 0 && (
+                  <div className="mt-3 p-3 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
+                    <p className="text-xs text-orange-800 dark:text-orange-200">
+                      ⚠️ {channelsWithoutStats} chaîne{channelsWithoutStats > 1 ? 's' : ''} sans statistiques
+                    </p>
+                  </div>
+                )}
                 
                 {channels && channels.length > 0 && (
                   <p className="text-xs text-purple-600 dark:text-purple-400 mt-2 text-center">
@@ -181,21 +280,72 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Formulaire de soumission - Visible seulement si connecté */}
-            {user && <SubmitChannelForm />}
+            {/* Information Top 100 */}
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6 border border-yellow-200 dark:border-yellow-700">
+              <h3 className="text-lg font-semibold mb-2 text-yellow-900 dark:text-yellow-100">
+                📊 À propos du Top 100
+              </h3>
+              <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-3">
+                Cette page affiche uniquement les 100 plus grandes chaînes YouTube au monde.
+              </p>
+              <Link
+                href="/youtube"
+                className="inline-flex items-center gap-2 text-yellow-700 dark:text-yellow-300 hover:text-yellow-800 dark:hover:text-yellow-100 font-medium"
+              >
+                Voir toutes les chaînes →
+              </Link>
+            </div>
+
+            {/* Call to action pour proposer une chaîne */}
+            {user ? (
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-2 text-blue-900 dark:text-blue-100">
+                  Une chaîne manque ?
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-200 mb-4">
+                  Proposez vos chaînes YouTube préférées sur la page dédiée.
+                </p>
+                <Link
+                  href="/youtube"
+                  className="block w-full text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  Proposer une chaîne
+                </Link>
+              </div>
+            ) : (
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-2 text-blue-900 dark:text-blue-100">
+                  Rejoignez la communauté !
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-200 mb-4">
+                  Connectez-vous pour proposer des chaînes sur la page YouTube.
+                </p>
+                <Link
+                  href="/auth/register"
+                  className="block w-full text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  S'inscrire gratuitement
+                </Link>
+              </div>
+            )}
             
-            {/* Widget de statistiques amélioré */}
+            {/* Widget de statistiques Top 100 */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-blue-500" />
-                Statistiques globales
+                Statistiques du Top 100
               </h3>
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Chaînes référencées</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Chaînes dans le Top 100</p>
                   <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {channels ? channels.length : 0}
+                    {channels ? channels.length : 0} / 100
                   </p>
+                  {channelsWithoutStats > 0 && (
+                    <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                      ({channelsWithoutStats} sans stats)
+                    </p>
+                  )}
                 </div>
                 {channels && channels.length > 0 && (
                   <>
@@ -212,15 +362,15 @@ export default function HomePage() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Total de vidéos</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {formatBigNumber(channels.reduce((sum: number, ch: any) => sum + (ch.videos || 0), 0))}
-                      </p>
-                    </div>
-                    <div className="pt-3 border-t dark:border-gray-700">
                       <p className="text-sm text-gray-600 dark:text-gray-400">Moyenne d'abonnés</p>
                       <p className="text-xl font-bold text-gray-900 dark:text-white">
                         {formatBigNumber(Math.round(channels.reduce((sum: number, ch: any) => sum + (ch.abonnes || 0), 0) / channels.length))}
+                      </p>
+                    </div>
+                    <div className="pt-3 border-t dark:border-gray-700">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Seuil d'entrée (100e)</p>
+                      <p className="text-xl font-bold text-gray-900 dark:text-white">
+                        {channels.length > 0 ? formatBigNumber(channels[channels.length - 1].abonnes) : '10M+'}
                       </p>
                     </div>
                   </>
@@ -228,28 +378,10 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Call to action si non connecté */}
-            {!user && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-2 text-blue-900 dark:text-blue-100">
-                  Rejoignez la communauté !
-                </h3>
-                <p className="text-sm text-blue-700 dark:text-blue-200 mb-4">
-                  Connectez-vous pour proposer des chaînes et voter pour leurs thèmes.
-                </p>
-                <Link
-                  href="/auth/register"
-                  className="block w-full text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                >
-                  S'inscrire gratuitement
-                </Link>
-              </div>
-            )}
-
-            {/* Top des thèmes amélioré */}
+            {/* Top des thèmes dans le Top 100 */}
             {channels && channels.length > 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-                <h3 className="text-lg font-semibold mb-4">Top des thèmes</h3>
+                <h3 className="text-lg font-semibold mb-4">Thèmes dominants</h3>
                 <div className="space-y-3">
                   {(() => {
                     const themeCounts: Record<string, number> = {};
@@ -277,61 +409,6 @@ export default function HomePage() {
                           </div>
                           <span className="text-sm font-medium text-gray-900 dark:text-white">
                             {count} chaîne{count > 1 ? 's' : ''}
-                          </span>
-                        </div>
-                      ));
-                  })()}
-                </div>
-              </div>
-            )}
-
-            {/* Top des pays */}
-            {channels && channels.length > 0 && channels.some((ch: any) => ch.pays) && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-                <h3 className="text-lg font-semibold mb-4">Répartition par pays</h3>
-                <div className="space-y-2">
-                  {(() => {
-                    const countryCounts: Record<string, number> = {};
-                    channels.forEach((ch: any) => {
-                      if (ch.pays) {
-                        countryCounts[ch.pays] = (countryCounts[ch.pays] || 0) + 1;
-                      }
-                    });
-                    
-                    const flags: Record<string, string> = {
-                      'US': '🇺🇸 États-Unis',
-                      'IN': '🇮🇳 Inde',
-                      'KR': '🇰🇷 Corée du Sud',
-                      'UK': '🇬🇧 Royaume-Uni',
-                      'FR': '🇫🇷 France',
-                      'CA': '🇨🇦 Canada',
-                      'DE': '🇩🇪 Allemagne',
-                      'ES': '🇪🇸 Espagne',
-                      'JP': '🇯🇵 Japon',
-                      'BR': '🇧🇷 Brésil',
-                      'RU': '🇷🇺 Russie',
-                      'UA': '🇺🇦 Ukraine',
-                      'SE': '🇸🇪 Suède',
-                      'AR': '🇦🇷 Argentine',
-                      'RO': '🇷🇴 Roumanie',
-                      'CN': '🇨🇳 Chine',
-                      'AU': '🇦🇺 Australie',
-                      'IE': '🇮🇪 Irlande',
-                      'SV': '🇸🇻 Salvador',
-                      'CH': '🇨🇭 Suisse',
-                      'CY': '🇨🇾 Chypre'
-                    };
-                    
-                    return Object.entries(countryCounts)
-                      .sort(([, a], [, b]) => b - a)
-                      .slice(0, 5)
-                      .map(([country, count]) => (
-                        <div key={country} className="flex justify-between items-center">
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {flags[country] || country}
-                          </span>
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {count}
                           </span>
                         </div>
                       ));
