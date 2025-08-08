@@ -5,6 +5,19 @@ import { Palette, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/components/providers/ThemeProvider';
 
 export function ThemeToggle() {
+  const [mounted, setMounted] = React.useState(false);
+  
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    // Retourner un placeholder pendant le SSR
+    return (
+      <div className="w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
+    );
+  }
+
   const { theme, setTheme } = useTheme();
 
   const handleToggle = () => {

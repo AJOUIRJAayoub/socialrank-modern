@@ -23,7 +23,11 @@ export const metadata: Metadata = {
     title: 'Ranki5 - Classement des Influenceurs',
     description: 'Découvrez le top 100 des créateurs de contenu YouTube',
   },
-  viewport: 'width=device-width, initial-scale=1',
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#111827' }
