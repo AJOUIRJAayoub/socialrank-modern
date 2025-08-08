@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Trophy, Users, Eye, Video, Calendar, MapPin, Youtube, ChevronDown, ChevronUp, TrendingUp, Clock, Globe } from 'lucide-react';
+import { Trophy, Users, Eye, Video, Calendar, MapPin, Youtube, ChevronDown, ChevronUp, TrendingUp, Clock, Globe, DollarSign } from 'lucide-react';
 import type { Channel } from '@/types';
 
 interface ChannelCardProps {
@@ -24,6 +24,35 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel, rank, isUserLoggedIn
       return (num / 1000).toFixed(1).replace('.', ',') + ' K';
     }
     return num.toLocaleString('fr-FR');
+  }, []);
+
+  // Calculer l'estimation des revenus mensuel (1$/1000vues)
+  const calculateMonthlyRevenue = useCallback((): number => {
+    if (!channel.vues || !channel.videos || channel.videos === 0) return 0;
+    
+    // Vues moyennes par vidéo
+    const avgViewsPerVideo = channel.vues / channel.videos;
+    
+    // Estimation: supposons 4 vidéos par mois en moyenne pour une chaîne active
+    const videosPerMonth = 4;
+    const monthlyViews = avgViewsPerVideo * videosPerMonth;
+    
+    // 1$ pour 1000 vues
+    return monthlyViews * 0.001;
+  }, [channel.vues, channel.videos]);
+
+  // Formater les revenus en dollars
+  const formatRevenue = useCallback((revenue: number): string => {
+    if (revenue >= 1000000) {
+      return `$${(revenue / 1000000).toFixed(1)}M`;
+    }
+    if (revenue >= 1000) {
+      return `$${(revenue / 1000).toFixed(1)}K`;
+    }
+    if (revenue >= 1) {
+      return `$${revenue.toFixed(0)}`;
+    }
+    return '$0';
   }, []);
 
   // Calculer l'engagement rate
@@ -89,18 +118,15 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel, rank, isUserLoggedIn
 
   const youtubeUrl = getYouTubeUrl();
   const imageUrl = getImageUrl();
+  const monthlyRevenue = calculateMonthlyRevenue();
 
   return (
     <div className="bg-gray-800 rounded-lg p-6 hover:bg-gray-750 transition-all duration-300 transform hover:scale-[1.02] border border-gray-700">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-4">
-          {/* Rang */}
+          {/* Rang - Maintenant juste les numéros */}
           <div className={`text-3xl font-bold ${getRankColor(rank)}`}>
-            {rank <= 3 ? (
-              <Trophy className="w-8 h-8" />
-            ) : (
-              `#${rank}`
-            )}
+            #{rank}
           </div>
           
           {/* Image et nom */}
@@ -166,13 +192,14 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel, rank, isUserLoggedIn
           </div>
         )}
         
-        {channel.vues && channel.videos && channel.videos > 0 && (
+        {/* Nouvelle section: Estimation revenus mensuel */}
+        {monthlyRevenue > 0 && (
           <div className="text-center">
-            <div className="flex items-center justify-center text-orange-400 mb-1">
-              <TrendingUp className="w-5 h-5 mr-1" />
-              <span className="text-sm">Engagement</span>
+            <div className="flex items-center justify-center text-yellow-400 mb-1">
+              <DollarSign className="w-5 h-5 mr-1" />
+              <span className="text-sm">Rev./mois</span>
             </div>
-            <p className="text-2xl font-bold text-white">{engagementRate}%</p>
+            <p className="text-2xl font-bold text-white">{formatRevenue(monthlyRevenue)}</p>
           </div>
         )}
       </div>
@@ -242,11 +269,22 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel, rank, isUserLoggedIn
                 </p>
               </div>
               <div className="bg-gray-700 rounded p-2">
-                <span className="text-gray-400">Abonnés/vidéo:</span>
+                <span className="text-gray-400">Estimation revenus/an:</span>
                 <p className="text-white font-semibold">
-                  {formatNumber(Math.round(channel.abonnes / channel.videos))}
+                  {formatRevenue(monthlyRevenue * 12)}
                 </p>
               </div>
+            </div>
+          )}
+          
+          {monthlyRevenue > 0 && (
+            <div className="bg-green-900/20 border border-green-700 rounded-lg p-3 mt-3">
+              <p className="text-green-300 text-xs mb-1">💡 Estimation basée sur:</p>
+              <ul className="text-green-200 text-xs space-y-1">
+                <li>• 4 vidéos par mois</li>
+                <li>• 1$ pour 1000 vues</li>
+                <li>• Moyenne: {formatNumber(Math.round((channel.vues || 0) / (channel.videos || 1)))} vues/vidéo</li>
+              </ul>
             </div>
           )}
           
