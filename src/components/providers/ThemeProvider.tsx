@@ -50,7 +50,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   // Éviter le flash de contenu non stylé
   if (!mounted) {
-    return null;
+    return <>{children}</>;
   }
 
   return (
