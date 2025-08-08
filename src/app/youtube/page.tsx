@@ -107,46 +107,15 @@ export default function YouTubePage() {
             </div>
           </div>
 
-          {/* Filtres par langue */}
-          <div className="mt-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Globe className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Filtrer par langue :
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {availableLanguages.map((lang) => (
-                <button
-                  key={lang.code}
-                  onClick={() => setSelectedLanguage(lang.code)}
-                  className={`px-3 py-1.5 rounded-full text-sm transition flex items-center gap-1.5 ${
-                    selectedLanguage === lang.code
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  <span className="text-base">{lang.flag}</span>
-                  <span>{lang.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Filtres par catégorie */}
-          <div className="mt-4">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Filtrer par catégorie :
-              </span>
-            </div>
+          <div className="mt-6">
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedCategory('all')}
-                className={`px-3 py-1 rounded-full text-sm transition ${
+                className={`px-3 py-1.5 rounded-full text-sm transition ${
                   selectedCategory === 'all'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                 }`}
               >
                 Toutes
@@ -155,13 +124,33 @@ export default function YouTubePage() {
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-3 py-1 rounded-full text-sm transition ${
+                  className={`px-3 py-1.5 rounded-full text-sm transition ${
                     selectedCategory === category
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                      ? 'bg-blue-500 text-white shadow-md'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                   }`}
                 >
                   {category}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Filtres par langue */}
+          <div className="mt-4">
+            <div className="flex flex-wrap gap-2">
+              {availableLanguages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => setSelectedLanguage(lang.code)}
+                  className={`px-3 py-1.5 rounded-full text-sm transition flex items-center gap-1.5 ${
+                    selectedLanguage === lang.code
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <span className="text-base">{lang.flag}</span>
+                  <span>{lang.label}</span>
                 </button>
               ))}
             </div>
