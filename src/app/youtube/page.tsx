@@ -250,16 +250,12 @@ export default function YouTubePage() {
   // Obtenir les catégories uniques
   const categories: string[] = [...new Set(channels?.map((ch: any) => ch.theme_principal).filter(Boolean) || [])] as string[];
 
-  // Obtenir les pays présents dans les données
-  const availableCountries = COUNTRIES.filter(country => 
-    country.code === 'all' || 
-    channels?.some((ch: any) => ch.pays === country.code)
-  );
-
   // Les 10 pays les plus populaires à afficher directement
   const popularCountries = ['all', 'US', 'FR', 'GB', 'IN', 'JP', 'BR', 'KR', 'DE', 'ES'];
   const displayCountries = COUNTRIES.filter(c => popularCountries.includes(c.code));
-  const otherCountries = availableCountries.filter(c => !popularCountries.includes(c.code));
+  
+  // TOUS les autres pays dans le dropdown (sans filtrage)
+  const otherCountries = COUNTRIES.filter(c => !popularCountries.includes(c.code));
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -550,7 +546,7 @@ export default function YouTubePage() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">Pays</span>
                     <span className="font-bold text-lg text-purple-600">
-                      {availableCountries.length - 1}
+                      {COUNTRIES.length - 1}
                     </span>
                   </div>
                 </div>
