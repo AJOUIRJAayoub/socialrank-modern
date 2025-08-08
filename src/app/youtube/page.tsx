@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Trophy, Gamepad2, Music, Baby, ChevronRight, Plus, Flag, TrendingUp, Users, Crown } from 'lucide-react';
+import { Trophy, Gamepad2, Music, Baby, ChevronRight, Plus, Flag, TrendingUp, Users, Crown, Globe } from 'lucide-react';
 import { AdSpace } from '@/components/ads/AdSpace';
 import Link from 'next/link';
 import { Header } from '@/components/layout/Header';
@@ -10,14 +10,32 @@ import { SubmitChannelForm } from '@/components/channels/SubmitChannelForm';
 import { useChannels } from '@/hooks/useChannels';
 import ChannelCard from '@/components/channels/ChannelCard';
 
+// Définir les langues disponibles
+const LANGUAGES = [
+  { code: 'all', label: 'Toutes les langues', flag: '🌍' },
+  { code: 'FR', label: 'Français', flag: '🇫🇷' },
+  { code: 'EN', label: 'English', flag: '🇬🇧' },
+  { code: 'ES', label: 'Español', flag: '🇪🇸' },
+  { code: 'DE', label: 'Deutsch', flag: '🇩🇪' },
+  { code: 'IT', label: 'Italiano', flag: '🇮🇹' },
+  { code: 'PT', label: 'Português', flag: '🇵🇹' },
+  { code: 'RU', label: 'Русский', flag: '🇷🇺' },
+  { code: 'JP', label: '日本語', flag: '🇯🇵' },
+  { code: 'KR', label: '한국어', flag: '🇰🇷' },
+  { code: 'CN', label: '中文', flag: '🇨🇳' },
+  { code: 'IN', label: 'हिन्दी', flag: '🇮🇳' },
+  { code: 'AR', label: 'العربية', flag: '🇸🇦' }
+];
+
 export default function YouTubePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
   const [showOnlyTop100, setShowOnlyTop100] = useState(false);
   const [showOnlyCommunity, setShowOnlyCommunity] = useState(false);
   const [search, setSearch] = useState('');
   
-  // Utiliser le filtre 'all' pour avoir toutes les chaînes
-  const { data: channels, isLoading, error } = useChannels(search, 'all');
+  // Utiliser le filtre avec langue
+  const { data: channels, isLoading, error } = useChannels(search, 'all', selectedLanguage);
   const { user } = useAuth();
 
   // Filtrer les chaînes selon les options sélectionnées
@@ -25,11 +43,18 @@ export default function YouTubePage() {
     if (showOnlyTop100 && !channel.is_top100) return false;
     if (showOnlyCommunity && channel.is_top100) return false;
     if (selectedCategory !== 'all' && channel.theme_principal !== selectedCategory) return false;
+    // Le filtre langue est déjà appliqué côté serveur via useChannels
     return true;
   }) || [];
 
   // Obtenir les catégories uniques
   const categories: string[] = [...new Set(channels?.map((ch: any) => ch.theme_principal).filter(Boolean) || [])] as string[];
+
+  // Obtenir les langues présentes dans les données
+  const availableLanguages = LANGUAGES.filter(lang => 
+    lang.code === 'all' || 
+    channels?.some((ch: any) => ch.langue_principale === lang.code || ch.pays === lang.code)
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -82,31 +107,64 @@ export default function YouTubePage() {
             </div>
           </div>
 
+          {/* Filtres par langue */}
+          <div className="mt-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Globe className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Filtrer par langue :
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {availableLanguages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => setSelectedLanguage(lang.code)}
+                  className={`px-3 py-1.5 rounded-full text-sm transition flex items-center gap-1.5 ${
+                    selectedLanguage === lang.code
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <span className="text-base">{lang.flag}</span>
+                  <span>{lang.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Filtres par catégorie */}
-          <div className="mt-6 flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`px-3 py-1 rounded-full text-sm transition ${
-                selectedCategory === 'all'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              Toutes
-            </button>
-            {categories.map((category: string) => (
+          <div className="mt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Filtrer par catégorie :
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
               <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => setSelectedCategory('all')}
                 className={`px-3 py-1 rounded-full text-sm transition ${
-                  selectedCategory === category
+                  selectedCategory === 'all'
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                 }`}
               >
-                {category}
+                Toutes
               </button>
-            ))}
+              {categories.map((category: string) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-3 py-1 rounded-full text-sm transition ${
+                    selectedCategory === category
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -136,8 +194,14 @@ export default function YouTubePage() {
 
             {!isLoading && filteredChannels.length === 0 && (
               <div className="bg-gray-100 dark:bg-gray-700 p-8 rounded-lg text-center">
+                <Globe className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                 <p className="text-lg text-gray-600 dark:text-gray-300">
                   Aucune chaîne trouvée avec ces critères
+                  {selectedLanguage !== 'all' && (
+                    <span className="block mt-2 text-sm">
+                      Essayez avec une autre langue ou sélectionnez "Toutes les langues"
+                    </span>
+                  )}
                 </p>
               </div>
             )}
@@ -147,6 +211,7 @@ export default function YouTubePage() {
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
                   <p className="text-sm text-blue-700 dark:text-blue-300">
                     {filteredChannels.length} chaîne{filteredChannels.length > 1 ? 's' : ''} trouvée{filteredChannels.length > 1 ? 's' : ''}
+                    {selectedLanguage !== 'all' && ` en ${LANGUAGES.find(l => l.code === selectedLanguage)?.label}`}
                     {showOnlyTop100 && ' (Top 100 uniquement)'}
                     {showOnlyCommunity && ' (Communauté uniquement)'}
                   </p>
@@ -161,7 +226,7 @@ export default function YouTubePage() {
                         isUserLoggedIn={!!user}
                       />
                       {/* Badge Top 100 ou Communauté */}
-                      <div className="absolute top-2 right-2">
+                      <div className="absolute top-2 right-2 flex gap-2">
                         {channel.is_top100 ? (
                           <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
                             <Crown className="w-3 h-3" />
@@ -171,6 +236,12 @@ export default function YouTubePage() {
                           <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
                             <Users className="w-3 h-3" />
                             Communauté
+                          </span>
+                        )}
+                        {/* Badge langue si disponible */}
+                        {channel.langue_principale && (
+                          <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
+                            {LANGUAGES.find(l => l.code === channel.langue_principale)?.flag || channel.langue_principale}
                           </span>
                         )}
                       </div>
@@ -219,7 +290,7 @@ export default function YouTubePage() {
             <div className="sticky top-24">
               <AdSpace format="vertical" />
               
-              {/* Stats globales */}
+              {/* Stats globales avec langues */}
               <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                 <h3 className="font-bold text-lg mb-4">📊 Statistiques</h3>
                 <div className="space-y-3">
@@ -242,6 +313,12 @@ export default function YouTubePage() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">Catégories</span>
                     <span className="font-bold text-lg">{categories.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400">Langues</span>
+                    <span className="font-bold text-lg text-purple-600">
+                      {availableLanguages.length - 1}
+                    </span>
                   </div>
                 </div>
                 

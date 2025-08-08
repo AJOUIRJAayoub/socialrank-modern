@@ -1,15 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/services/api-client';
 
-export function useChannels(search?: string, filter: 'all' | 'top100' | 'community' = 'all') {
+export function useChannels(
+  search?: string, 
+  filter: 'all' | 'top100' | 'community' = 'all',
+  language: string = 'all'
+) {
   return useQuery({
-    queryKey: ['channels', search, filter],
+    queryKey: ['channels', search, filter, language],
     queryFn: async () => {
       try {
         // Construire l'URL avec les paramètres
         const params = new URLSearchParams();
         if (search) params.append('search', search);
         params.append('filter', filter);
+        if (language && language !== 'all') params.append('language', language);
         
         const url = `${process.env.NEXT_PUBLIC_API_URL}?action=channels&${params.toString()}`;
         const response = await fetch(url);
