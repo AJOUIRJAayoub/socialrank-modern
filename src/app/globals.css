@@ -375,16 +375,42 @@ button[aria-label="Toggle theme"] {
 
 /* ====== FIX DROPDOWN PAYS ====== */
 
-/* Dropdown container - Fix pour tous les thèmes */
+/* Z-index hierarchy */
+header {
+  z-index: 50 !important;
+}
+
+.sticky {
+  z-index: 40 !important;
+}
+
+/* Dropdown container - Z-index maximum */
+.relative .absolute.top-full,
+div[class*="relative"] div[class*="absolute"][class*="top-full"],
+.absolute.bg-white.dark\:bg-gray-800.rounded-lg.shadow-xl,
+.absolute.top-full.mt-2 {
+  z-index: 9999 !important;
+  position: absolute !important;
+}
+
+/* Parent du dropdown doit aussi avoir un z-index élevé */
+.relative:has(.absolute.top-full) {
+  z-index: 9998 !important;
+  position: relative !important;
+}
+
+/* Dropdown styles pour chaque thème */
 .theme-dark .absolute.bg-white.dark\:bg-gray-800,
-.theme-dark div[class*="absolute"][class*="mt-2"][class*="bg-white"] {
+.theme-dark div[class*="absolute"][class*="mt-2"][class*="bg-white"],
+.theme-dark .absolute.top-full {
   background: #0a0a0a !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8) !important;
 }
 
 .theme-default .absolute.bg-white.dark\:bg-gray-800,
-.theme-default div[class*="absolute"][class*="mt-2"][class*="bg-white"] {
+.theme-default div[class*="absolute"][class*="mt-2"][class*="bg-white"],
+.theme-default .absolute.top-full {
   background: rgba(30, 41, 59, 0.98) !important;
   backdrop-filter: blur(20px) !important;
   border: 1px solid rgba(71, 85, 105, 0.3) !important;
@@ -392,7 +418,8 @@ button[aria-label="Toggle theme"] {
 }
 
 .theme-light .absolute.bg-white.dark\:bg-gray-800,
-.theme-light div[class*="absolute"][class*="mt-2"][class*="bg-white"] {
+.theme-light div[class*="absolute"][class*="mt-2"][class*="bg-white"],
+.theme-light .absolute.top-full {
   background: #ffffff !important;
   border: 1px solid #e0e0e0 !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
@@ -440,47 +467,48 @@ button[aria-label="Toggle theme"] {
 }
 
 /* Dropdown max height et scroll */
-div[class*="absolute"][class*="max-h-96"] {
+div[class*="absolute"][class*="max-h-96"],
+.absolute.top-full {
   max-height: 400px !important;
   overflow-y: auto !important;
 }
 
 /* Scrollbar du dropdown */
-.theme-dark div[class*="absolute"]::-webkit-scrollbar {
+.theme-dark .absolute::-webkit-scrollbar {
   width: 8px;
 }
 
-.theme-dark div[class*="absolute"]::-webkit-scrollbar-track {
+.theme-dark .absolute::-webkit-scrollbar-track {
   background: #0a0a0a;
 }
 
-.theme-dark div[class*="absolute"]::-webkit-scrollbar-thumb {
+.theme-dark .absolute::-webkit-scrollbar-thumb {
   background: #2a2a2a;
   border-radius: 4px;
 }
 
-.theme-default div[class*="absolute"]::-webkit-scrollbar {
+.theme-default .absolute::-webkit-scrollbar {
   width: 8px;
 }
 
-.theme-default div[class*="absolute"]::-webkit-scrollbar-track {
+.theme-default .absolute::-webkit-scrollbar-track {
   background: rgba(30, 41, 59, 0.3);
 }
 
-.theme-default div[class*="absolute"]::-webkit-scrollbar-thumb {
+.theme-default .absolute::-webkit-scrollbar-thumb {
   background: rgba(71, 85, 105, 0.6);
   border-radius: 4px;
 }
 
-.theme-light div[class*="absolute"]::-webkit-scrollbar {
+.theme-light .absolute::-webkit-scrollbar {
   width: 8px;
 }
 
-.theme-light div[class*="absolute"]::-webkit-scrollbar-track {
+.theme-light .absolute::-webkit-scrollbar-track {
   background: #f8f9fa;
 }
 
-.theme-light div[class*="absolute"]::-webkit-scrollbar-thumb {
+.theme-light .absolute::-webkit-scrollbar-thumb {
   background: #c0c0c0;
   border-radius: 4px;
 }
@@ -496,4 +524,12 @@ div[class*="absolute"][class*="max-h-96"] {
 
 .theme-light .absolute span {
   color: inherit !important;
+}
+
+/* Forcer les éléments de pub à rester en dessous */
+[class*="AdSpace"],
+[class*="Publicité"],
+.bg-gradient-to-br.from-blue-500.to-purple-600 {
+  z-index: 1 !important;
+  position: relative !important;
 }
