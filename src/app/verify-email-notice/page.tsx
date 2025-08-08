@@ -1,19 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Mail, RefreshCw, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
-export default function VerifyEmailNoticePage() {
+function VerifyEmailNoticeContent() {
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [resendError, setResendError] = useState('');
+  const [email, setEmail] = useState('');
   
   const searchParams = useSearchParams();
-  const email = searchParams.get('email') || '';
   const { resendVerification } = useAuth();
+
+  useEffect(() => {
+    const emailParam = searchParams.get('email') || '';
+    setEmail(emailParam);
+  }, [searchParams]);
 
   const handleResend = async () => {
     if (!email) {
@@ -57,7 +64,7 @@ export default function VerifyEmailNoticePage() {
         </p>
 
         <div className="bg-white/20 rounded-lg p-3 mb-6">
-          <p className="text-white font-semibold">{email}</p>
+          <p className="text-white font-semibold">{email || 'votre@email.com'}</p>
         </div>
 
         <p className="text-white/70 text-sm mb-8">
@@ -81,7 +88,7 @@ export default function VerifyEmailNoticePage() {
         <div className="space-y-3">
           <button
             onClick={handleResend}
-            disabled={isResending || resendSuccess}
+            disabled={isResending || resendSuccess || !email}
             className="w-full bg-white/20 border border-white/30 text-white py-3 rounded-lg font-semibold hover:bg-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {isResending ? (
@@ -119,5 +126,24 @@ export default function VerifyEmailNoticePage() {
 
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailNoticePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-600 flex items-center justify-center p-4">
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 max-w-md w-full text-center">
+          <div className="flex justify-center mb-6">
+            <Mail className="w-16 h-16 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-4">
+            Chargement...
+          </h1>
+        </div>
+      </div>
+    }>
+      <VerifyEmailNoticeContent />
+    </Suspense>
   );
 }
