@@ -14,7 +14,7 @@ export function ThemeToggle() {
   if (!mounted) {
     // Retourner un placeholder pendant le SSR
     return (
-      <div className="w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
+      <div className="w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse mx-2" />
     );
   }
 
@@ -32,39 +32,41 @@ export function ThemeToggle() {
   };
 
   return (
-    <button
-      onClick={handleToggle}
-      className="relative p-2 w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded-full transition-all duration-300"
-      aria-label="Toggle theme"
-    >
-      {/* Indicateur de position */}
-      <div
-        className={`absolute top-1 w-8 h-8 bg-white dark:bg-gray-900 rounded-full shadow-md transition-transform duration-300 flex items-center justify-center ${
-          theme === 'default' 
-            ? 'translate-x-0' 
-            : theme === 'light' 
-            ? 'translate-x-10' 
-            : 'translate-x-20'
-        }`}
+    <div className="mx-2">
+      <button
+        onClick={handleToggle}
+        className="relative p-2 w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded-full transition-all duration-300"
+        aria-label="Toggle theme"
       >
-        {theme === 'default' && <Palette className="w-4 h-4 text-purple-500" />}
-        {theme === 'light' && <Sun className="w-4 h-4 text-yellow-500" />}
-        {theme === 'dark' && <Moon className="w-4 h-4 text-blue-500" />}
-      </div>
-      
-      {/* Labels */}
-      <div className="relative flex justify-around items-center h-full px-1 pointer-events-none">
-        <span className={`text-xs ${theme === 'default' ? 'opacity-0' : 'opacity-50'}`}>
-          <Palette className="w-3 h-3" />
-        </span>
-        <span className={`text-xs ${theme === 'light' ? 'opacity-0' : 'opacity-50'}`}>
-          <Sun className="w-3 h-3" />
-        </span>
-        <span className={`text-xs ${theme === 'dark' ? 'opacity-0' : 'opacity-50'}`}>
-          <Moon className="w-3 h-3" />
-        </span>
-      </div>
-    </button>
+        {/* Indicateur de position */}
+        <div
+          className={`absolute top-1 w-8 h-8 bg-white dark:bg-gray-900 rounded-full shadow-md transition-transform duration-300 flex items-center justify-center ${
+            theme === 'default' 
+              ? 'translate-x-0' 
+              : theme === 'light' 
+              ? 'translate-x-10' 
+              : 'translate-x-20'
+          }`}
+        >
+          {theme === 'default' && <Palette className="w-4 h-4 text-purple-500" />}
+          {theme === 'light' && <Sun className="w-4 h-4 text-yellow-500" />}
+          {theme === 'dark' && <Moon className="w-4 h-4 text-blue-500" />}
+        </div>
+        
+        {/* Labels */}
+        <div className="relative flex justify-around items-center h-full px-1 pointer-events-none">
+          <span className={`text-xs ${theme === 'default' ? 'opacity-0' : 'opacity-50'}`}>
+            <Palette className="w-3 h-3" />
+          </span>
+          <span className={`text-xs ${theme === 'light' ? 'opacity-0' : 'opacity-50'}`}>
+            <Sun className="w-3 h-3" />
+          </span>
+          <span className={`text-xs ${theme === 'dark' ? 'opacity-0' : 'opacity-50'}`}>
+            <Moon className="w-3 h-3" />
+          </span>
+        </div>
+      </button>
+    </div>
   );
 }
 
@@ -100,7 +102,7 @@ export function ThemeToggleDropdown() {
   const currentTheme = themes.find(t => t.value === theme);
 
   return (
-    <div className="relative">
+    <div className="relative mx-2">
       <button
         onClick={() => setShowDropdown(!showDropdown)}
         className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
