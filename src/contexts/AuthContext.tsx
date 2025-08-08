@@ -26,17 +26,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://abc123go.ranki5.com/auth-api.php';
 
-// Configuration authentification pour l'API protégée
-const API_AUTH = btoa('admin:ranki5-2025');
-
+// ✅ SUPPRESSION de la Basic Auth qui causait l'erreur !
 async function apiCall(action: string, data?: any, method: string = 'POST') {
   const url = `${API_URL}?action=${action}`;
   
   const options: RequestInit = {
     method,
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Basic ${API_AUTH}` // Pour passer la protection htaccess
+      'Content-Type': 'application/json'
+      // ✅ Plus de Basic Auth ici !
     }
   };
   
@@ -80,12 +78,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const data = await apiCall('login', { username, password });
       
-      if (data.success && data.user) {
+      if (data.success) {
         const userData: User = {
-          id: data.user.id,
-          username: data.user.username,
-          email: data.user.email,
-          role: data.user.role || 'user'
+          id: data.id,
+          username: data.username,
+          email: data.email,
+          role: data.role || 'user'
         };
 
         if (data.token) {
