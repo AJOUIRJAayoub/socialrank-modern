@@ -1,26 +1,102 @@
 @import "tailwindcss";
 
-:root {
+/* Variables pour le thème par défaut (coloré) */
+.theme-default {
+  --background: #f9fafb;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #a855f7;
+  --secondary-foreground: #ffffff;
+  --accent: #fb923c;
+  --accent-foreground: #ffffff;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --border: #e5e7eb;
+}
+
+/* Thème light (très blanc, minimaliste) */
+.theme-light {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1f2937;
+  --card: #ffffff;
+  --card-foreground: #1f2937;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: #9ca3af;
+  --secondary-foreground: #ffffff;
+  --accent: #6366f1;
+  --accent-foreground: #ffffff;
+  --muted: #f9fafb;
+  --muted-foreground: #6b7280;
+  --border: #f3f4f6;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Thème dark (sombre) */
+.theme-dark,
+.dark {
+  --background: #111827;
+  --foreground: #f3f4f6;
+  --card: #1f2937;
+  --card-foreground: #f3f4f6;
+  --primary: #60a5fa;
+  --primary-foreground: #111827;
+  --secondary: #a78bfa;
+  --secondary-foreground: #111827;
+  --accent: #fbbf24;
+  --accent-foreground: #111827;
+  --muted: #374151;
+  --muted-foreground: #9ca3af;
+  --border: #374151;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Animations douces pour les transitions de thème */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Style pour le thème par défaut - Plus coloré */
+.theme-default .gradient-hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.theme-default .btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #a855f7 100%);
+}
+
+/* Style pour le thème light - Très minimaliste */
+.theme-light .gradient-hero {
+  background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%);
+}
+
+.theme-light .btn-primary {
+  background: #111827;
+}
+
+/* Scrollbar personnalisée selon le thème */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
 }

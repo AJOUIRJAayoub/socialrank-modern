@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 interface HeaderProps {
   showSearch?: boolean;
@@ -72,6 +73,9 @@ export function Header({ showSearch = false, onSearchChange, searchValue = '' }:
           
           {/* Actions droite */}
           <div className="flex items-center gap-3">
+            {/* Theme Toggle - NOUVEAU */}
+            <ThemeToggle />
+            
             {/* Bouton globe pour YouTube */}
             {pathname.includes('/youtube') && (
               <button className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
