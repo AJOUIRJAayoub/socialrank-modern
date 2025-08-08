@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { Mail, RefreshCw, CheckCircle } from 'lucide-react';
+import { Mail, RefreshCw, CheckCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 function VerifyEmailNoticeContent() {
@@ -13,6 +13,7 @@ function VerifyEmailNoticeContent() {
   const [resendSuccess, setResendSuccess] = useState(false);
   const [resendError, setResendError] = useState('');
   const [email, setEmail] = useState('');
+  const [cooldownTime, setCooldownTime] = useState(0);
   
   const searchParams = useSearchParams();
   const { resendVerification } = useAuth();
@@ -20,11 +21,41 @@ function VerifyEmailNoticeContent() {
   useEffect(() => {
     const emailParam = searchParams.get('email') || '';
     setEmail(emailParam);
+    
+    // Vérifier s'il y a un cooldown en cours
+    const lastSent = localStorage.getItem(`resend_cooldown_${emailParam}`);
+    if (lastSent) {
+      const timeDiff = Date.now() - parseInt(lastSent);
+      const remainingTime = 60000 - timeDiff; // 1 minute en ms
+      
+      if (remainingTime > 0) {
+        setCooldownTime(Math.ceil(remainingTime / 1000));
+        startCooldownTimer(Math.ceil(remainingTime / 1000));
+      }
+    }
   }, [searchParams]);
+
+  const startCooldownTimer = (seconds: number) => {
+    setCooldownTime(seconds);
+    const timer = setInterval(() => {
+      setCooldownTime((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const handleResend = async () => {
     if (!email) {
       setResendError('Email manquant');
+      return;
+    }
+
+    if (cooldownTime > 0) {
+      setResendError(`Veuillez attendre ${cooldownTime} secondes avant de renvoyer`);
       return;
     }
 
@@ -34,6 +65,10 @@ function VerifyEmailNoticeContent() {
     try {
       await resendVerification(email);
       setResendSuccess(true);
+      
+      // Démarrer le cooldown de 1 minute
+      localStorage.setItem(`resend_cooldown_${email}`, Date.now().toString());
+      startCooldownTimer(60);
       
       // Réinitialiser le succès après 5 secondes
       setTimeout(() => {
@@ -88,13 +123,18 @@ function VerifyEmailNoticeContent() {
         <div className="space-y-3">
           <button
             onClick={handleResend}
-            disabled={isResending || resendSuccess || !email}
+            disabled={isResending || resendSuccess || !email || cooldownTime > 0}
             className="w-full bg-white/20 border border-white/30 text-white py-3 rounded-lg font-semibold hover:bg-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {isResending ? (
               <div className="flex items-center">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 Envoi en cours...
+              </div>
+            ) : cooldownTime > 0 ? (
+              <div className="flex items-center">
+                <Clock className="w-4 h-4 mr-2" />
+                Attendre {cooldownTime}s
               </div>
             ) : resendSuccess ? (
               <div className="flex items-center">
@@ -110,7 +150,7 @@ function VerifyEmailNoticeContent() {
           </button>
 
           <Link 
-            href="/login"
+            href="/auth/login"
             className="block border border-white text-white px-6 py-3 rounded-lg hover:bg-white/10 transition-colors"
           >
             Retour à la connexion
@@ -119,8 +159,12 @@ function VerifyEmailNoticeContent() {
 
         <div className="mt-6">
           <p className="text-white/60 text-xs">
-            Vous n'avez pas reçu l'email ? Vérifiez votre dossier spam ou 
-            cliquez sur "Renvoyer l'email" ci-dessus.
+            Vous pouvez renvoyer l'email toutes les minutes.
+            {cooldownTime > 0 && (
+              <span className="block mt-1 text-yellow-300">
+                Prochain envoi possible dans {cooldownTime} seconde{cooldownTime > 1 ? 's' : ''}
+              </span>
+            )}
           </p>
         </div>
 
