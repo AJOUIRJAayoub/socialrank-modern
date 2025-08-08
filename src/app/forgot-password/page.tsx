@@ -3,48 +3,67 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
-import { Mail, ArrowLeft } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
   const { forgotPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     setError('');
-    setLoading(true);
 
     try {
       await forgotPassword(email);
-      setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue');
+      setIsSuccess(true);
+    } catch (error: any) {
+      setError(error.message || 'Une erreur est survenue');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  if (success) {
+  if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
-        <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-lg">
-          <div className="text-center">
-            <div className="mx-auto h-12 w-12 bg-green-500 rounded-full flex items-center justify-center mb-4">
-              <Mail className="h-6 w-6 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Email envoyé !</h2>
-            <p className="text-gray-400 mb-6">
-              Si un compte existe avec l'adresse {email}, vous recevrez un email avec les instructions pour réinitialiser votre mot de passe.
-            </p>
-            <Link
+      <div className="min-h-screen bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-600 flex items-center justify-center p-4">
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 max-w-md w-full text-center">
+          <div className="flex justify-center mb-6">
+            <CheckCircle className="w-16 h-16 text-green-400" />
+          </div>
+          
+          <h1 className="text-2xl font-bold text-white mb-4">
+            Email envoyé !
+          </h1>
+          
+          <p className="text-white/80 mb-6">
+            Si cet email existe dans notre base, vous recevrez un lien de réinitialisation dans quelques minutes.
+          </p>
+          
+          <p className="text-sm text-white/60 mb-6">
+            Vérifiez également vos spams.
+          </p>
+          
+          <div className="space-y-3">
+            <Link 
               href="/login"
-              className="text-red-500 hover:text-red-400 font-medium"
+              className="block bg-white text-purple-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
             >
               Retour à la connexion
             </Link>
+            
+            <button
+              onClick={() => {
+                setIsSuccess(false);
+                setEmail('');
+              }}
+              className="block w-full border border-white text-white px-6 py-2 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              Renvoyer un email
+            </button>
           </div>
         </div>
       </div>
@@ -52,56 +71,76 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <Link
-            href="/login"
-            className="flex items-center text-gray-400 hover:text-white mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Retour
-          </Link>
-          <h2 className="text-3xl font-extrabold text-white">
+    <div className="min-h-screen bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-600 flex items-center justify-center p-4">
+      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 max-w-md w-full">
+        
+        <Link 
+          href="/login"
+          className="inline-flex items-center text-white/80 hover:text-white mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Retour à la connexion
+        </Link>
+
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <Mail className="w-12 h-12 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">
             Mot de passe oublié ?
-          </h2>
-          <p className="mt-2 text-gray-400">
-            Entrez votre email pour recevoir un lien de réinitialisation
+          </h1>
+          <p className="text-white/80">
+            Entrez votre email pour recevoir un lien de réinitialisation.
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
-
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+            <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
               Adresse email
             </label>
             <input
               id="email"
-              name="email"
               type="email"
-              autoComplete="email"
-              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              required
               placeholder="votre@email.com"
+              className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
             />
           </div>
 
+          {error && (
+            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3">
+              <p className="text-red-200 text-sm">{error}</p>
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
+            className="w-full bg-white text-purple-600 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            {loading ? 'Envoi...' : 'Envoyer le lien'}
+            {isLoading ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-2"></div>
+                Envoi en cours...
+              </div>
+            ) : (
+              'Envoyer le lien'
+            )}
           </button>
         </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-white/60 text-sm">
+            Vous vous souvenez de votre mot de passe ?{' '}
+            <Link href="/login" className="text-white hover:underline">
+              Se connecter
+            </Link>
+          </p>
+        </div>
+
       </div>
     </div>
   );

@@ -8,7 +8,6 @@ interface User {
   username: string;
   email?: string;
   role: 'user' | 'admin';
-  email_verified?: boolean;
 }
 
 interface AuthContextType {
@@ -16,18 +15,44 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
-  forgotPassword: (email: string) => Promise<{ message: string }>;
-  resetPassword: (token: string, password: string) => Promise<{ message: string }>;
-  verifyEmail: (token: string) => Promise<{ message: string }>;
-  resendVerificationEmail: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<any>;
+  resetPassword: (token: string, password: string) => Promise<any>;
+  verifyEmail: (token: string) => Promise<any>;
+  resendVerification: (email: string) => Promise<any>;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Configuration API
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://abc123go.ranki5.com/auth-api.php';
-const API_AUTH = btoa('admin:ranki5-2025'); // Pour le .htpasswd
+
+// Configuration authentification pour l'API protégée
+const API_AUTH = btoa('admin:ranki5-2025');
+
+async function apiCall(action: string, data?: any, method: string = 'POST') {
+  const url = `${API_URL}?action=${action}`;
+  
+  const options: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Basic ${API_AUTH}` // Pour passer la protection htaccess
+    }
+  };
+  
+  if (data && method !== 'GET') {
+    options.body = JSON.stringify(data);
+  }
+  
+  const response = await fetch(url, options);
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.error || 'Erreur réseau');
+  }
+  
+  return result;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -35,95 +60,120 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
     const token = Cookies.get('token');
     if (token) {
-      try {
-        const response = await fetch(`${API_URL}?action=verify-token`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Authorization-Basic': `Basic ${API_AUTH}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-          localStorage.setItem('user', JSON.stringify(data.user));
-        } else {
-          // Token invalide
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch (error) {
+          console.error('Erreur parsing user data:', error);
           Cookies.remove('token');
           localStorage.removeItem('user');
         }
-      } catch (error) {
-        console.error('Auth check error:', error);
       }
     }
     setIsLoading(false);
-  };
+  }, []);
 
   const login = async (username: string, password: string) => {
     try {
-      const response = await fetch(`${API_URL}?action=login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${API_AUTH}`
-        },
-        body: JSON.stringify({ username, password })
-      });
+      const data = await apiCall('login', { username, password });
+      
+      if (data.success && data.user) {
+        const userData: User = {
+          id: data.user.id,
+          username: data.user.username,
+          email: data.user.email,
+          role: data.user.role || 'user'
+        };
 
-      const data = await response.json();
+        if (data.token) {
+          Cookies.set('token', data.token, { expires: 7 });
+        }
 
-      if (!response.ok) {
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        router.push('/');
+      } else {
         throw new Error(data.error || 'Erreur de connexion');
       }
-
-      // Sauvegarder le token et l'utilisateur
-      Cookies.set('token', data.token, { expires: 7 });
-      localStorage.setItem('user', JSON.stringify(data.user));
-      setUser(data.user);
-
-      // Redirection selon le rôle
-      if (data.user.role === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push('/dashboard');
-      }
     } catch (error: any) {
-      throw new Error(error.message || 'Erreur de connexion');
+      if (error.message.includes('email')) {
+        throw new Error('Veuillez vérifier votre email avant de vous connecter');
+      }
+      throw error;
     }
   };
 
   const register = async (username: string, email: string, password: string) => {
     try {
-      const response = await fetch(`${API_URL}?action=register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${API_AUTH}`
-        },
-        body: JSON.stringify({ username, email, password })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
+      const data = await apiCall('register', { username, email, password });
+      
+      if (data.success) {
+        // Rediriger vers la page de notice de vérification
+        router.push('/verify-email-notice?email=' + encodeURIComponent(email));
+      } else {
         throw new Error(data.error || 'Erreur lors de l\'inscription');
       }
-
-      // Sauvegarder le token et l'utilisateur
-      Cookies.set('token', data.token, { expires: 7 });
-      localStorage.setItem('user', JSON.stringify(data.user));
-      setUser(data.user);
-
-      // Rediriger vers la page de vérification d'email
-      router.push('/verify-email-notice');
     } catch (error: any) {
-      throw new Error(error.message || 'Erreur lors de l\'inscription');
+      throw error;
+    }
+  };
+
+  const forgotPassword = async (email: string) => {
+    try {
+      const data = await apiCall('forgot_password', { email });
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Erreur lors de la demande');
+      }
+      
+      return data;
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  const resetPassword = async (token: string, password: string) => {
+    try {
+      const data = await apiCall('reset_password', { token, password });
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Erreur lors de la réinitialisation');
+      }
+      
+      return data;
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  const verifyEmail = async (token: string) => {
+    try {
+      const data = await apiCall('verify_email', { token });
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Erreur lors de la vérification');
+      }
+      
+      return data;
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  const resendVerification = async (email: string) => {
+    try {
+      const data = await apiCall('resend_verification', { email });
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Erreur lors de l\'envoi');
+      }
+      
+      return data;
+    } catch (error: any) {
+      throw error;
     }
   };
 
@@ -134,104 +184,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/');
   };
 
-  const forgotPassword = async (email: string) => {
-    const response = await fetch(`${API_URL}?action=forgot-password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${API_AUTH}`
-      },
-      body: JSON.stringify({ email })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Erreur lors de l\'envoi');
-    }
-
-    return data;
-  };
-
-  const resetPassword = async (token: string, password: string) => {
-    const response = await fetch(`${API_URL}?action=reset-password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${API_AUTH}`
-      },
-      body: JSON.stringify({ token, password })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Erreur lors de la réinitialisation');
-    }
-
-    return data;
-  };
-
-  const verifyEmail = async (token: string) => {
-    const response = await fetch(`${API_URL}?action=verify-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${API_AUTH}`
-      },
-      body: JSON.stringify({ token })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Erreur lors de la vérification');
-    }
-
-    // Mettre à jour l'utilisateur si connecté
-    if (user) {
-      const updatedUser = { ...user, email_verified: true };
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-    }
-
-    return data;
-  };
-
-  const resendVerificationEmail = async () => {
-    const token = Cookies.get('token');
-    if (!token) {
-      throw new Error('Non connecté');
-    }
-
-    const response = await fetch(`${API_URL}?action=resend-verification`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'Authorization-Basic': `Basic ${API_AUTH}`
-      }
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Erreur lors de l\'envoi');
-    }
-
-    return data;
-  };
-
   return (
     <AuthContext.Provider value={{ 
       user, 
       login, 
       register, 
-      logout,
+      logout, 
       forgotPassword,
       resetPassword,
       verifyEmail,
-      resendVerificationEmail,
+      resendVerification,
       isLoading 
     }}>
       {children}
@@ -241,6 +203,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
   return context;
 };
