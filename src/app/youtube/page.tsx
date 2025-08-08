@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Trophy, Gamepad2, Music, Baby, ChevronRight, Plus, Flag, TrendingUp, Users, Crown, Globe } from 'lucide-react';
+import { Trophy, Gamepad2, Music, Baby, ChevronRight, Plus, Flag, TrendingUp, Users, Crown, Globe, ChevronDown } from 'lucide-react';
 import { AdSpace } from '@/components/ads/AdSpace';
 import Link from 'next/link';
 import { Header } from '@/components/layout/Header';
@@ -10,32 +10,70 @@ import { SubmitChannelForm } from '@/components/channels/SubmitChannelForm';
 import { useChannels } from '@/hooks/useChannels';
 import ChannelCard from '@/components/channels/ChannelCard';
 
-// Définir les langues disponibles
-const LANGUAGES = [
-  { code: 'all', label: 'Toutes les langues', flag: '🌍' },
-  { code: 'FR', label: 'Français', flag: '🇫🇷' },
-  { code: 'EN', label: 'English', flag: '🇬🇧' },
-  { code: 'ES', label: 'Español', flag: '🇪🇸' },
-  { code: 'DE', label: 'Deutsch', flag: '🇩🇪' },
-  { code: 'IT', label: 'Italiano', flag: '🇮🇹' },
-  { code: 'PT', label: 'Português', flag: '🇵🇹' },
-  { code: 'RU', label: 'Русский', flag: '🇷🇺' },
-  { code: 'JP', label: '日本語', flag: '🇯🇵' },
-  { code: 'KR', label: '한국어', flag: '🇰🇷' },
-  { code: 'CN', label: '中文', flag: '🇨🇳' },
-  { code: 'IN', label: 'हिन्दी', flag: '🇮🇳' },
-  { code: 'AR', label: 'العربية', flag: '🇸🇦' }
+// Définir les pays disponibles avec leurs drapeaux
+const COUNTRIES = [
+  { code: 'all', label: 'Tous les pays', flag: '🌍' },
+  // Europe
+  { code: 'FR', label: 'France', flag: '🇫🇷' },
+  { code: 'GB', label: 'Royaume-Uni', flag: '🇬🇧' },
+  { code: 'DE', label: 'Allemagne', flag: '🇩🇪' },
+  { code: 'ES', label: 'Espagne', flag: '🇪🇸' },
+  { code: 'IT', label: 'Italie', flag: '🇮🇹' },
+  { code: 'PT', label: 'Portugal', flag: '🇵🇹' },
+  { code: 'NL', label: 'Pays-Bas', flag: '🇳🇱' },
+  { code: 'BE', label: 'Belgique', flag: '🇧🇪' },
+  { code: 'CH', label: 'Suisse', flag: '🇨🇭' },
+  { code: 'SE', label: 'Suède', flag: '🇸🇪' },
+  { code: 'NO', label: 'Norvège', flag: '🇳🇴' },
+  { code: 'PL', label: 'Pologne', flag: '🇵🇱' },
+  { code: 'RU', label: 'Russie', flag: '🇷🇺' },
+  { code: 'UA', label: 'Ukraine', flag: '🇺🇦' },
+  // Amériques
+  { code: 'US', label: 'États-Unis', flag: '🇺🇸' },
+  { code: 'CA', label: 'Canada', flag: '🇨🇦' },
+  { code: 'MX', label: 'Mexique', flag: '🇲🇽' },
+  { code: 'BR', label: 'Brésil', flag: '🇧🇷' },
+  { code: 'AR', label: 'Argentine', flag: '🇦🇷' },
+  { code: 'CL', label: 'Chili', flag: '🇨🇱' },
+  { code: 'CO', label: 'Colombie', flag: '🇨🇴' },
+  // Asie
+  { code: 'JP', label: 'Japon', flag: '🇯🇵' },
+  { code: 'KR', label: 'Corée du Sud', flag: '🇰🇷' },
+  { code: 'CN', label: 'Chine', flag: '🇨🇳' },
+  { code: 'IN', label: 'Inde', flag: '🇮🇳' },
+  { code: 'PK', label: 'Pakistan', flag: '🇵🇰' },
+  { code: 'TH', label: 'Thaïlande', flag: '🇹🇭' },
+  { code: 'ID', label: 'Indonésie', flag: '🇮🇩' },
+  { code: 'MY', label: 'Malaisie', flag: '🇲🇾' },
+  { code: 'SG', label: 'Singapour', flag: '🇸🇬' },
+  { code: 'PH', label: 'Philippines', flag: '🇵🇭' },
+  { code: 'VN', label: 'Vietnam', flag: '🇻🇳' },
+  // Moyen-Orient & Afrique
+  { code: 'SA', label: 'Arabie Saoudite', flag: '🇸🇦' },
+  { code: 'AE', label: 'Émirats', flag: '🇦🇪' },
+  { code: 'TR', label: 'Turquie', flag: '🇹🇷' },
+  { code: 'IL', label: 'Israël', flag: '🇮🇱' },
+  { code: 'EG', label: 'Égypte', flag: '🇪🇬' },
+  { code: 'ZA', label: 'Afrique du Sud', flag: '🇿🇦' },
+  { code: 'NG', label: 'Nigeria', flag: '🇳🇬' },
+  { code: 'MA', label: 'Maroc', flag: '🇲🇦' },
+  { code: 'DZ', label: 'Algérie', flag: '🇩🇿' },
+  { code: 'TN', label: 'Tunisie', flag: '🇹🇳' },
+  // Océanie
+  { code: 'AU', label: 'Australie', flag: '🇦🇺' },
+  { code: 'NZ', label: 'Nouvelle-Zélande', flag: '🇳🇿' }
 ];
 
 export default function YouTubePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
+  const [selectedCountry, setSelectedCountry] = useState<string>('all');
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [showOnlyTop100, setShowOnlyTop100] = useState(false);
   const [showOnlyCommunity, setShowOnlyCommunity] = useState(false);
   const [search, setSearch] = useState('');
   
-  // Utiliser le filtre avec langue
-  const { data: channels, isLoading, error } = useChannels(search, 'all', selectedLanguage);
+  // Utiliser le filtre avec pays
+  const { data: channels, isLoading, error } = useChannels(search, 'all', selectedCountry);
   const { user } = useAuth();
 
   // Filtrer les chaînes selon les options sélectionnées
@@ -50,11 +88,16 @@ export default function YouTubePage() {
   // Obtenir les catégories uniques
   const categories: string[] = [...new Set(channels?.map((ch: any) => ch.theme_principal).filter(Boolean) || [])] as string[];
 
-  // Obtenir les langues présentes dans les données
-  const availableLanguages = LANGUAGES.filter(lang => 
-    lang.code === 'all' || 
-    channels?.some((ch: any) => ch.langue_principale === lang.code || ch.pays === lang.code)
+  // Obtenir les pays présents dans les données
+  const availableCountries = COUNTRIES.filter(country => 
+    country.code === 'all' || 
+    channels?.some((ch: any) => ch.pays === country.code)
   );
+
+  // Les 10 pays les plus populaires à afficher directement
+  const popularCountries = ['all', 'US', 'FR', 'GB', 'IN', 'JP', 'BR', 'KR', 'DE', 'ES'];
+  const displayCountries = COUNTRIES.filter(c => popularCountries.includes(c.code));
+  const otherCountries = availableCountries.filter(c => !popularCountries.includes(c.code));
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -136,23 +179,62 @@ export default function YouTubePage() {
             </div>
           </div>
 
-          {/* Filtres par langue */}
+          {/* Filtres par pays */}
           <div className="mt-4">
-            <div className="flex flex-wrap gap-2">
-              {availableLanguages.map((lang) => (
+            <div className="flex flex-wrap gap-2 items-center">
+              {/* Pays populaires affichés directement */}
+              {displayCountries.map((country) => (
                 <button
-                  key={lang.code}
-                  onClick={() => setSelectedLanguage(lang.code)}
+                  key={country.code}
+                  onClick={() => setSelectedCountry(country.code)}
                   className={`px-3 py-1.5 rounded-full text-sm transition flex items-center gap-1.5 ${
-                    selectedLanguage === lang.code
+                    selectedCountry === country.code
                       ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
                       : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                   }`}
                 >
-                  <span className="text-base">{lang.flag}</span>
-                  <span>{lang.label}</span>
+                  <span className="text-base">{country.flag}</span>
+                  {country.code === 'all' && <span>{country.label}</span>}
                 </button>
               ))}
+              
+              {/* Menu déroulant pour les autres pays */}
+              {otherCountries.length > 0 && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                    className="px-3 py-1.5 rounded-full text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition flex items-center gap-1.5"
+                  >
+                    <Globe className="w-4 h-4" />
+                    <span>Plus de pays</span>
+                    <ChevronDown className={`w-3 h-3 transition-transform ${showCountryDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {showCountryDropdown && (
+                    <div className="absolute top-full mt-2 left-0 bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 z-50 max-h-96 overflow-y-auto min-w-[200px]">
+                      <div className="p-2">
+                        {otherCountries.map((country) => (
+                          <button
+                            key={country.code}
+                            onClick={() => {
+                              setSelectedCountry(country.code);
+                              setShowCountryDropdown(false);
+                            }}
+                            className={`w-full px-3 py-2 rounded text-sm transition flex items-center gap-2 text-left ${
+                              selectedCountry === country.code
+                                ? 'bg-purple-500 text-white'
+                                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                            }`}
+                          >
+                            <span className="text-base">{country.flag}</span>
+                            <span>{country.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -186,9 +268,9 @@ export default function YouTubePage() {
                 <Globe className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                 <p className="text-lg text-gray-600 dark:text-gray-300">
                   Aucune chaîne trouvée avec ces critères
-                  {selectedLanguage !== 'all' && (
+                  {selectedCountry !== 'all' && (
                     <span className="block mt-2 text-sm">
-                      Essayez avec une autre langue ou sélectionnez "Toutes les langues"
+                      Essayez avec un autre pays ou sélectionnez "Tous les pays"
                     </span>
                   )}
                 </p>
@@ -200,7 +282,7 @@ export default function YouTubePage() {
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
                   <p className="text-sm text-blue-700 dark:text-blue-300">
                     {filteredChannels.length} chaîne{filteredChannels.length > 1 ? 's' : ''} trouvée{filteredChannels.length > 1 ? 's' : ''}
-                    {selectedLanguage !== 'all' && ` en ${LANGUAGES.find(l => l.code === selectedLanguage)?.label}`}
+                    {selectedCountry !== 'all' && ` - ${COUNTRIES.find(c => c.code === selectedCountry)?.label}`}
                     {showOnlyTop100 && ' (Top 100 uniquement)'}
                     {showOnlyCommunity && ' (Communauté uniquement)'}
                   </p>
@@ -227,10 +309,10 @@ export default function YouTubePage() {
                             Communauté
                           </span>
                         )}
-                        {/* Badge langue si disponible */}
-                        {channel.langue_principale && (
+                        {/* Badge pays si disponible */}
+                        {channel.pays && (
                           <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
-                            {LANGUAGES.find(l => l.code === channel.langue_principale)?.flag || channel.langue_principale}
+                            {COUNTRIES.find(c => c.code === channel.pays)?.flag || channel.pays}
                           </span>
                         )}
                       </div>
@@ -304,9 +386,9 @@ export default function YouTubePage() {
                     <span className="font-bold text-lg">{categories.length}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-400">Langues</span>
+                    <span className="text-gray-600 dark:text-gray-400">Pays</span>
                     <span className="font-bold text-lg text-purple-600">
-                      {availableLanguages.length - 1}
+                      {availableCountries.length - 1}
                     </span>
                   </div>
                 </div>
