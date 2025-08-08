@@ -1,117 +1,142 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { CheckCircle, XCircle, Loader } from 'lucide-react';
+import { Mail, RefreshCw, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
-export default function VerifyEmailPage() {
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('');
+function VerifyEmailNoticeContent() {
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const [resendError, setResendError] = useState('');
+  
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const { verifyEmail } = useAuth();
+  const email = searchParams.get('email') || '';
+  const { resendVerification } = useAuth();
 
-  useEffect(() => {
-    const token = searchParams.get('token');
-    
-    if (!token) {
-      setStatus('error');
-      setMessage('Token de vérification manquant');
+  const handleResend = async () => {
+    if (!email) {
+      setResendError('Email manquant');
       return;
     }
 
-    const verify = async () => {
-      try {
-        const result = await verifyEmail(token);
-        setStatus('success');
-        setMessage(result.message || 'Email vérifié avec succès !');
-        
-        // Rediriger vers la page de connexion après 3 secondes
-        setTimeout(() => {
-          router.push('/login?verified=true');
-        }, 3000);
-        
-      } catch (error: any) {
-        setStatus('error');
-        setMessage(error.message || 'Erreur lors de la vérification');
-      }
-    };
+    setIsResending(true);
+    setResendError('');
 
-    verify();
-  }, [searchParams, verifyEmail, router]);
+    try {
+      await resendVerification(email);
+      setResendSuccess(true);
+      
+      // Réinitialiser le succès après 5 secondes
+      setTimeout(() => {
+        setResendSuccess(false);
+      }, 5000);
+      
+    } catch (error: any) {
+      setResendError(error.message || 'Erreur lors de l\'envoi');
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-600 flex items-center justify-center p-4">
       <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 max-w-md w-full text-center">
         
-        {status === 'loading' && (
-          <>
-            <div className="flex justify-center mb-6">
-              <Loader className="w-16 h-16 text-white animate-spin" />
-            </div>
-            <h1 className="text-2xl font-bold text-white mb-4">
-              Vérification en cours...
-            </h1>
-            <p className="text-white/80">
-              Veuillez patienter pendant que nous vérifions votre email.
-            </p>
-          </>
+        <div className="flex justify-center mb-6">
+          <Mail className="w-16 h-16 text-white" />
+        </div>
+
+        <h1 className="text-2xl font-bold text-white mb-4">
+          Vérifiez votre email
+        </h1>
+
+        <p className="text-white/80 mb-6">
+          Nous avons envoyé un lien de vérification à :
+        </p>
+
+        <div className="bg-white/20 rounded-lg p-3 mb-6">
+          <p className="text-white font-semibold">{email}</p>
+        </div>
+
+        <p className="text-white/70 text-sm mb-8">
+          Cliquez sur le lien dans l'email pour activer votre compte. 
+          N'oubliez pas de vérifier vos spams !
+        </p>
+
+        {resendSuccess && (
+          <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 mb-4 flex items-center">
+            <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
+            <p className="text-green-200 text-sm">Email renvoyé avec succès !</p>
+          </div>
         )}
 
-        {status === 'success' && (
-          <>
-            <div className="flex justify-center mb-6">
-              <CheckCircle className="w-16 h-16 text-green-400" />
-            </div>
-            <h1 className="text-2xl font-bold text-white mb-4">
-              Email vérifié !
-            </h1>
-            <p className="text-white/80 mb-6">
-              {message}
-            </p>
-            <p className="text-sm text-white/60 mb-4">
-              Redirection automatique vers la page de connexion...
-            </p>
-            <Link 
-              href="/login"
-              className="inline-block bg-white text-purple-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-            >
-              Me connecter maintenant
-            </Link>
-          </>
+        {resendError && (
+          <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4">
+            <p className="text-red-200 text-sm">{resendError}</p>
+          </div>
         )}
 
-        {status === 'error' && (
-          <>
-            <div className="flex justify-center mb-6">
-              <XCircle className="w-16 h-16 text-red-400" />
-            </div>
-            <h1 className="text-2xl font-bold text-white mb-4">
-              Erreur de vérification
-            </h1>
-            <p className="text-white/80 mb-6">
-              {message}
-            </p>
-            <div className="space-y-3">
-              <Link 
-                href="/login"
-                className="block bg-white text-purple-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-              >
-                Aller à la connexion
-              </Link>
-              <Link 
-                href="/register"
-                className="block border border-white text-white px-6 py-2 rounded-lg hover:bg-white/10 transition-colors"
-              >
-                Créer un nouveau compte
-              </Link>
-            </div>
-          </>
-        )}
+        <div className="space-y-3">
+          <button
+            onClick={handleResend}
+            disabled={isResending || resendSuccess}
+            className="w-full bg-white/20 border border-white/30 text-white py-3 rounded-lg font-semibold hover:bg-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          >
+            {isResending ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Envoi en cours...
+              </div>
+            ) : resendSuccess ? (
+              <div className="flex items-center">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Email envoyé
+              </div>
+            ) : (
+              <div className="flex items-center">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Renvoyer l'email
+              </div>
+            )}
+          </button>
+
+          <Link 
+            href="/login"
+            className="block border border-white text-white px-6 py-3 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            Retour à la connexion
+          </Link>
+        </div>
+
+        <div className="mt-6">
+          <p className="text-white/60 text-xs">
+            Vous n'avez pas reçu l'email ? Vérifiez votre dossier spam ou 
+            cliquez sur "Renvoyer l'email" ci-dessus.
+          </p>
+        </div>
 
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailNoticePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-600 flex items-center justify-center p-4">
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 max-w-md w-full text-center">
+          <div className="flex justify-center mb-6">
+            <Mail className="w-16 h-16 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-4">
+            Chargement...
+          </h1>
+        </div>
+      </div>
+    }>
+      <VerifyEmailNoticeContent />
+    </Suspense>
   );
 }
