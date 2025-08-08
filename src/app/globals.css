@@ -372,3 +372,128 @@ button[aria-label="Toggle theme"] {
   background: rgba(71, 85, 105, 0.6);
   border-radius: 6px;
 }
+
+/* ====== FIX DROPDOWN PAYS ====== */
+
+/* Dropdown container - Fix pour tous les thèmes */
+.theme-dark .absolute.bg-white.dark\:bg-gray-800,
+.theme-dark div[class*="absolute"][class*="mt-2"][class*="bg-white"] {
+  background: #0a0a0a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8) !important;
+}
+
+.theme-default .absolute.bg-white.dark\:bg-gray-800,
+.theme-default div[class*="absolute"][class*="mt-2"][class*="bg-white"] {
+  background: rgba(30, 41, 59, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(71, 85, 105, 0.3) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important;
+}
+
+.theme-light .absolute.bg-white.dark\:bg-gray-800,
+.theme-light div[class*="absolute"][class*="mt-2"][class*="bg-white"] {
+  background: #ffffff !important;
+  border: 1px solid #e0e0e0 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Items du dropdown */
+.theme-dark .absolute button {
+  color: #ffffff !important;
+}
+
+.theme-dark .absolute button:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.theme-default .absolute button {
+  color: #ffffff !important;
+}
+
+.theme-default .absolute button:hover {
+  background: rgba(96, 165, 250, 0.1) !important;
+}
+
+.theme-light .absolute button {
+  color: #000000 !important;
+}
+
+.theme-light .absolute button:hover {
+  background: #f5f5f5 !important;
+}
+
+/* Dropdown selected item */
+.theme-dark .absolute .bg-purple-500 {
+  background: #1d4ed8 !important;
+  color: #ffffff !important;
+}
+
+.theme-default .absolute .bg-purple-500 {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+}
+
+.theme-light .absolute .bg-purple-500 {
+  background: #0066cc !important;
+  color: #ffffff !important;
+}
+
+/* Dropdown max height et scroll */
+div[class*="absolute"][class*="max-h-96"] {
+  max-height: 400px !important;
+  overflow-y: auto !important;
+}
+
+/* Scrollbar du dropdown */
+.theme-dark div[class*="absolute"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+.theme-dark div[class*="absolute"]::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+.theme-dark div[class*="absolute"]::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+
+.theme-default div[class*="absolute"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+.theme-default div[class*="absolute"]::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.3);
+}
+
+.theme-default div[class*="absolute"]::-webkit-scrollbar-thumb {
+  background: rgba(71, 85, 105, 0.6);
+  border-radius: 4px;
+}
+
+.theme-light div[class*="absolute"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+.theme-light div[class*="absolute"]::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+.theme-light div[class*="absolute"]::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border-radius: 4px;
+}
+
+/* Fix text visibility in dropdown */
+.theme-dark .absolute span {
+  color: #ffffff !important;
+}
+
+.theme-default .absolute span {
+  color: #ffffff !important;
+}
+
+.theme-light .absolute span {
+  color: inherit !important;
+}
