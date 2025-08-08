@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'next/navigation';
 import { LogIn, Eye, EyeOff, CheckCircle, Mail } from 'lucide-react';
 import Link from 'next/link';
 
-export function LoginForm() {
+function LoginFormContent() {
   const { login } = useAuth();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -184,5 +184,25 @@ export function LoginForm() {
 
       </div>
     </div>
+  );
+}
+
+export function LoginForm() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-600 flex items-center justify-center p-4">
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 max-w-md w-full text-center">
+          <div className="flex justify-center mb-4">
+            <LogIn className="w-12 h-12 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-4">
+            Chargement...
+          </h1>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+        </div>
+      </div>
+    }>
+      <LoginFormContent />
+    </Suspense>
   );
 }
