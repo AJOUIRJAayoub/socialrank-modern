@@ -100,3 +100,79 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--foreground);
 }
+
+/* Classes utilitaires pour les composants */
+.bg-card {
+  background-color: var(--card);
+}
+
+.text-foreground {
+  color: var(--foreground);
+}
+
+.text-muted-foreground {
+  color: var(--muted-foreground);
+}
+
+.border-border {
+  border-color: var(--border);
+}
+
+.bg-muted {
+  background-color: var(--muted);
+}
+
+/* OVERRIDES POUR FORCER LES THÈMES SUR TAILWIND */
+.theme-light .bg-gray-800,
+.theme-light .dark\:bg-gray-800,
+.theme-light .bg-gray-900,
+.theme-light .dark\:bg-gray-900,
+.theme-light .bg-gray-700,
+.theme-light .dark\:bg-gray-700 {
+  background-color: #ffffff !important;
+}
+
+.theme-light .text-white,
+.theme-light .dark\:text-white,
+.theme-light .text-gray-100,
+.theme-light .dark\:text-gray-100 {
+  color: #1f2937 !important;
+}
+
+.theme-light .border-gray-700,
+.theme-light .dark\:border-gray-700 {
+  border-color: #e5e7eb !important;
+}
+
+.theme-light .bg-gray-50,
+.theme-light .dark\:bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+
+/* Dark theme overrides */
+.theme-dark .bg-white,
+.theme-dark .bg-gray-50 {
+  background-color: #1f2937 !important;
+}
+
+.theme-dark .text-gray-900,
+.theme-dark .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+.theme-dark .bg-gray-100 {
+  background-color: #374151 !important;
+}
+
+.theme-dark .border-gray-300 {
+  border-color: #4b5563 !important;
+}
+
+/* Default theme - garde les couleurs originales mais avec ajustements */
+.theme-default .bg-gray-800 {
+  background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
+}
+
+.theme-default .bg-gray-700 {
+  background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%) !important;
+}
